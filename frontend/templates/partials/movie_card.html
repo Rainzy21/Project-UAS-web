@@ -1,0 +1,17 @@
+<div class="card-bg rounded-lg border border-gray-800 overflow-hidden flex flex-col group cursor-pointer transition hover:border-gray-600">
+    <div class="relative aspect-[2/3] bg-gradient-to-b from-stone-700 to-gray-900">
+        <div class="absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1 backdrop-blur-sm border border-gray-700/50">
+            <i class="fa-solid fa-star text-[#ffc107] text-[10px]"></i> {{ movie.rating|default:"0.0" }}
+        </div>
+    </div>
+    <div class="p-4 flex flex-col gap-3">
+        <h3 class="font-bold text-sm truncate">{{ movie.title }}</h3>
+        <div class="flex justify-between items-center text-[11px] text-gray-400">
+            <span>{{ movie.year }}</span>
+            <span class="border border-gray-700 px-2 py-0.5 rounded uppercase tracking-wider bg-gray-900/50">{{ movie.genre }}</span>
+        </div>
+        <button class="action-restricted flex items-center gap-2 text-xs text-gray-400 hover:text-white transition w-max mt-1">
+            <i class="fa-regular fa-heart"></i> Favorite
+        </button>
+    </div>
+</div>

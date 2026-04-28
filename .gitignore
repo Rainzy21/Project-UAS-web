@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+*.env
+
+# Database
+db.sqlite3
+
+# Django
+*.log
+staticfiles/
+media/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (jika pakai frontend tools)
+node_modules/
+dist/
+build/
+
+# Coverage / testing
+.coverage
+htmlcov/

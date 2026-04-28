@@ -1,16 +1,44 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SongkyFilm</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="icon" type="image/png" href="/path/ke/logo/logo-32x32.png">
+    <title>{% block title %}SJ{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-<body>
-    <div>
-        <h1>SongkyFilm</h1>
-        <p>Hellow</p>
-    </div>
+<body class="min-h-screen relative flex flex-col">
+
+    <nav class="flex justify-between items-center px-10 py-6 text-sm text-gray-300 border-b border-gray-800/50 absolute w-full z-20">
+        <div class="flex items-center gap-3">
+            <div class="bg-[#737373] text-black font-bold px-2 py-1 rounded">SJ</div>
+            <span class="text-white font-medium tracking-wide">MovieReview</span>
+        </div>
+        <div class="flex items-center gap-2 hover:text-white cursor-pointer transition">
+            <i class="fa-solid fa-film"></i>
+            <a href="{% url 'movies' %}">All Movies</a>
+        </div>
+        <div class="flex items-center gap-8">
+            <button class="flex items-center gap-2 hover:text-white transition" id="wishlist-btn">
+                <i class="fa-regular fa-bookmark"></i>
+                <span>Wishlist</span>
+            </button>
+            <button class="flex items-center gap-2 hover:text-white transition border-l border-gray-700 pl-8" id="login-trigger">
+                <i class="fa-regular fa-user"></i>
+                <span>Login / Sign Up</span>
+            </button>
+        </div>
+    </nav>
+
+    {% block content %}
+    {% endblock %}
+
+    {% include 'partials/chat_box.html' %}
+    {% include 'pages/login_signup.html' %}
+
+    <script src="{% static 'js/movie.js' %}"></script>
+    <script src="{% static 'js/chat.js' %}"></script>
 </body>
 </html>
