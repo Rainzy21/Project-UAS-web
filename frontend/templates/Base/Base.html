@@ -38,6 +38,11 @@
     {% include 'partials/chat_box.html' %}
     {% include 'pages/login_signup.html' %}
 
+    <script>
+        // Set your TMDB API key here (or inject from server). Leave empty to disable.
+        window.TMDB_API_KEY = '';
+    </script>
+    <script src="{% static 'js/api.js' %}"></script>
     <script src="{% static 'js/movie.js' %}"></script>
     <script src="{% static 'js/chat.js' %}"></script>
 </body>
