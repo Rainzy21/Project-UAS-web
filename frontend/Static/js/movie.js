@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleModal = (show, message = "Please login to continue.") => {
         if (show) {
             modal.classList.remove('hidden');
-            modalContext.innerText = message;
+            if (modalContext) modalContext.innerText = message;
         } else {
             modal.classList.add('hidden');
         }

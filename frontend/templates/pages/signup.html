@@ -1,0 +1,135 @@
+<div id="auth-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-[#1c1d1f] w-full max-w-[420px] rounded-lg shadow-2xl relative border border-gray-800">
+        <button id="close-modal" class="absolute top-4 right-4 text-gray-500 hover:text-white transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <div class="p-8">
+            <div class="flex justify-center mb-6">
+                <div class="bg-[#ffc107] text-black font-bold text-2xl rounded-md px-3 py-1 shadow-[0_0_15px_rgba(255,193,7,0.15)]">SJ</div>
+            </div>
+
+            <!-- Tab Switch -->
+            <div class="flex bg-[#121212] rounded-md p-1 mb-6">
+                <button id="tab-login" onclick="switchTab('login')"
+                    class="flex-1 py-2 text-sm font-semibold rounded transition bg-[#ffc107] text-black">
+                    Login
+                </button>
+                <button id="tab-signup" onclick="switchTab('signup')"
+                    class="flex-1 py-2 text-sm font-semibold rounded transition text-gray-400 hover:text-white">
+                    Sign Up
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="form-login">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-1">Welcome Back</h2>
+                    <p class="text-sm text-gray-400">Please login to continue.</p>
+                </div>
+                <form action="#" method="POST" class="space-y-5">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase mb-2">Username or Email</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-user text-gray-500 text-sm"></i></div>
+                            <input type="text" name="login_username" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="Enter your username or email" required>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase">Password</label>
+                            <a href="#" class="text-[11px] text-[#ffc107] hover:underline">Forgot Password?</a>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-gray-500 text-sm"></i></div>
+                            <input type="password" name="login_password" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full text-black bg-[#d49a00] hover:bg-[#ffc107] font-bold rounded text-sm px-5 py-3 mt-2">Login</button>
+                </form>
+                <div class="border-t border-gray-800/60 mt-6 mb-4"></div>
+                <p class="text-center text-sm text-gray-400">New here? <button onclick="switchTab('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="form-signup" class="hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-1">Create Account</h2>
+                    <p class="text-sm text-gray-400">Join SJ MovieReview today.</p>
+                </div>
+                <form action="#" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase mb-2">Username</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-user text-gray-500 text-sm"></i></div>
+                            <input type="text" name="signup_username" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="Choose a username" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase mb-2">Email</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-envelope text-gray-500 text-sm"></i></div>
+                            <input type="email" name="signup_email" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="Enter your email" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase mb-2">Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-gray-500 text-sm"></i></div>
+                            <input type="password" name="signup_password" id="signup_password" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="Create a password" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-gray-400 tracking-wider uppercase mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-gray-500 text-sm"></i></div>
+                            <input type="password" name="signup_confirm" id="signup_confirm" class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded focus:ring-1 focus:ring-[#ffc107] block pl-10 p-2.5 outline-none" placeholder="Repeat your password" required>
+                        </div>
+                        <p id="password-mismatch" class="hidden text-xs text-red-400 mt-1">Passwords do not match.</p>
+                    </div>
+                    <button type="submit" onclick="return checkPasswords()" class="w-full text-black bg-[#d49a00] hover:bg-[#ffc107] font-bold rounded text-sm px-5 py-3 mt-2">Create Account</button>
+                </form>
+                <div class="border-t border-gray-800/60 mt-6 mb-4"></div>
+                <p class="text-center text-sm text-gray-400">Already have an account? <button onclick="switchTab('login')" class="text-white font-semibold hover:underline">Login</button></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        const loginForm = document.getElementById('form-login');
+        const signupForm = document.getElementById('form-signup');
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
+
+        if (tab === 'login') {
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+            tabLogin.classList.add('bg-[#ffc107]', 'text-black');
+            tabLogin.classList.remove('text-gray-400', 'hover:text-white');
+            tabSignup.classList.remove('bg-[#ffc107]', 'text-black');
+            tabSignup.classList.add('text-gray-400', 'hover:text-white');
+        } else {
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            tabSignup.classList.add('bg-[#ffc107]', 'text-black');
+            tabSignup.classList.remove('text-gray-400', 'hover:text-white');
+            tabLogin.classList.remove('bg-[#ffc107]', 'text-black');
+            tabLogin.classList.add('text-gray-400', 'hover:text-white');
+        }
+    }
+
+    function checkPasswords() {
+        const pw = document.getElementById('signup_password').value;
+        const confirm = document.getElementById('signup_confirm').value;
+        const msg = document.getElementById('password-mismatch');
+        if (pw !== confirm) {
+            msg.classList.remove('hidden');
+            return false;
+        }
+        msg.classList.add('hidden');
+        return true;
+    }
+</script>
