@@ -13,7 +13,7 @@
 
     <nav class="flex justify-between items-center px-10 py-6 text-sm text-gray-300 border-b border-gray-800/50 absolute w-full z-20">
         <div class="flex items-center gap-3">
-            <div class="bg-[#737373] text-black font-bold px-2 py-1 rounded">SJ</div>
+            <div class="bg-[#737373 ] text-black font-bold px-2 py-1 rounded">SJ</div>
             <span class="text-white font-medium tracking-wide">MovieReview</span>
         </div>
         <div class="flex items-center gap-2 hover:text-white cursor-pointer transition">
@@ -35,8 +35,11 @@
     {% block content %}
     {% endblock %}
 
+    {% include 'partials/footer.html' %}
     {% include 'partials/chat_box.html' %}
-    {% include 'pages/login_signup.html' %}
+    {% include 'pages/login.html' %}
+    {% include 'pages/signup.html' %}
+
 
     <script>
         // Set your TMDB API key here (or inject from server). Leave empty to disable.

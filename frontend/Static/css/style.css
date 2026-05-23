@@ -29,3 +29,28 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* ── Chatbot animations ──────────────────────────────────── */
+#chat-panel {
+    animation: chatSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chatSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+#typing-indicator .animate-bounce {
+    animation: typingDot 0.6s infinite alternate;
+}
+
+@keyframes typingDot {
+    from { opacity: 0.3; transform: translateY(0); }
+    to   { opacity: 1;   transform: translateY(-3px); }
+}

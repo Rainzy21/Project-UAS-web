@@ -1,8 +1,65 @@
-<div class="fixed bottom-6 right-6 flex items-end gap-3 z-40">
-    <button class="w-8 h-8 bg-gray-800 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-700 transition border border-gray-700 shadow-lg" id="help-btn">
+<!-- Chatbot FAB Buttons -->
+<div class="fixed bottom-6 right-6 flex items-end gap-3 z-40" id="chat-fab-group">
+    <button class="w-8 h-8 bg-gray-800 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-700 transition border border-gray-700 shadow-lg" id="help-btn" title="Help Center">
         <i class="fa-solid fa-question text-[10px]"></i>
     </button>
-    <button class="w-14 h-14 bg-[#ffc107] text-black rounded-full flex items-center justify-center hover:bg-yellow-400 transition shadow-lg" id="chat-btn">
-        <i class="fa-solid fa-comment text-xl"></i>
+    <button class="w-14 h-14 bg-[#ffc107] text-black rounded-full flex items-center justify-center hover:bg-yellow-400 transition shadow-lg shadow-yellow-500/20" id="chat-toggle-btn" title="AI Support Chat">
+        <i class="fa-solid fa-comment text-xl" id="chat-toggle-icon"></i>
     </button>
+</div>
+
+<!-- Chatbot Panel -->
+<div id="chat-panel" class="fixed bottom-24 right-6 w-[380px] max-h-[520px] rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-700/60 hidden" style="background: rgba(22, 22, 22, 0.92); backdrop-filter: blur(20px);">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-700/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-[#ffc107] to-[#ff9800] rounded-full flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-robot text-black text-base"></i>
+            </div>
+            <div>
+                <h4 class="text-white font-semibold text-sm leading-tight">AI Support</h4>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-emerald-400 text-[11px] font-medium">Online</span>
+                </div>
+            </div>
+        </div>
+        <button id="chat-close-btn" class="text-gray-500 hover:text-white transition p-1 rounded hover:bg-gray-700/40">
+            <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-4 no-scrollbar" style="min-height: 260px; max-height: 320px;">
+        <!-- Welcome message (injected by JS) -->
+    </div>
+
+    <!-- Suggested Questions -->
+    <div id="chat-suggestions" class="px-5 pb-3">
+        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-2">Coba Tanyakan</p>
+        <div class="flex flex-wrap gap-2">
+            <button class="chat-suggestion text-[11px] text-gray-300 bg-gray-800/70 hover:bg-gray-700 border border-gray-700/60 rounded-lg px-3 py-1.5 transition hover:text-white">🎬 Film trending minggu ini?</button>
+            <button class="chat-suggestion text-[11px] text-gray-300 bg-gray-800/70 hover:bg-gray-700 border border-gray-700/60 rounded-lg px-3 py-1.5 transition hover:text-white">🍿 Rekomendasi film horror</button>
+            <button class="chat-suggestion text-[11px] text-gray-300 bg-gray-800/70 hover:bg-gray-700 border border-gray-700/60 rounded-lg px-3 py-1.5 transition hover:text-white">⭐ Film rating tertinggi 2024</button>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="px-4 py-3 border-t border-gray-700/50">
+        <form id="chat-form" class="flex items-center gap-2">
+            <input
+                type="text"
+                id="chat-input"
+                class="flex-1 bg-[#1a1a1a] border border-gray-700 text-white text-sm rounded-lg focus:ring-1 focus:ring-[#ffc107] focus:border-[#ffc107] px-4 py-2.5 outline-none placeholder-gray-500"
+                placeholder="Type your message..."
+                autocomplete="off"
+                maxlength="500"
+            >
+            <button type="submit" id="chat-send-btn" class="w-10 h-10 bg-[#ffc107] hover:bg-yellow-400 text-black rounded-lg flex items-center justify-center transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-paper-plane text-sm"></i>
+            </button>
+        </form>
+        <p class="text-[9px] text-gray-600 text-center mt-2">Powered by DeepSeek AI &bull; Responses may not always be accurate</p>
+    </div>
 </div>

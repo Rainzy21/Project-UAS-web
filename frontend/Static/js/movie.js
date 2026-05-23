@@ -1,31 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('auth-modal');
+    const loginModal = document.getElementById('login-modal');
+    const signupModal = document.getElementById('signup-modal');
     const loginTrigger = document.getElementById('login-trigger');
-    const closeModal = document.getElementById('close-modal');
     const restrictedActions = document.querySelectorAll('.action-restricted');
-    const modalContext = document.getElementById('modal-context');
+    const loginModalContext = document.getElementById('login-modal-context');
 
-    const toggleModal = (show, message = "Please login to continue.") => {
+    window.toggleLoginModal = (show, message = "Please login to continue.") => {
         if (show) {
-            modal.classList.remove('hidden');
-            if (modalContext) modalContext.innerText = message;
+            loginModal.classList.remove('hidden');
+            if (loginModalContext) loginModalContext.innerText = message;
         } else {
-            modal.classList.add('hidden');
+            loginModal.classList.add('hidden');
         }
     };
 
-    if (loginTrigger) {
-        loginTrigger.addEventListener('click', () => toggleModal(true));
-    }
+    window.toggleSignupModal = (show) => {
+        if (show) {
+            signupModal.classList.remove('hidden');
+        } else {
+            signupModal.classList.add('hidden');
+        }
+    };
 
-    if (closeModal) {
-        closeModal.addEventListener('click', () => toggleModal(false));
+    window.switchToSignup = () => {
+        toggleLoginModal(false);
+        toggleSignupModal(true);
+    };
+
+    window.switchToLogin = () => {
+        toggleSignupModal(false);
+        toggleLoginModal(true);
+    };
+
+    if (loginTrigger) {
+        loginTrigger.addEventListener('click', () => toggleLoginModal(true));
     }
 
     // Menangani klik di luar modal untuk menutup
     window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            toggleModal(false);
+        if (e.target === loginModal) {
+            toggleLoginModal(false);
+        }
+        if (e.target === signupModal) {
+            toggleSignupModal(false);
         }
     });
 
@@ -33,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     restrictedActions.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            toggleModal(true, "Please login to save your favorites.");
+            toggleLoginModal(true, "Please login to save your favorites.");
         });
     });
 
@@ -43,33 +60,98 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!container) return;
         try{
             const movies = await window.AppAPI.fetchTrendingMovies();
-            container.innerHTML = '';
+            container.replaceChildren();
             movies.forEach(m => {
                 const card = document.createElement('div');
                 card.className = 'card-bg rounded-lg border border-gray-800 overflow-hidden flex flex-col group cursor-pointer transition hover:border-gray-600';
-                card.innerHTML = `
-                    <div class="relative aspect-[2/3] bg-gradient-to-b from-stone-700 to-gray-900">
-                        <img src="${window.AppAPI.posterPath(m.poster_path)}" alt="${m.title}" class="w-full h-full object-cover"/>
-                        <div class="absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1 backdrop-blur-sm border border-gray-700/50">
-                            <i class="fa-solid fa-star text-[#ffc107] text-[10px]"></i> ${m.vote_average?.toFixed(1) || '0.0'}
-                        </div>
-                    </div>
-                    <div class="p-4 flex flex-col gap-3">
-                        <h3 class="font-bold text-sm truncate">${m.title}</h3>
-                        <div class="flex justify-between items-center text-[11px] text-gray-400">
-                            <span>${(m.release_date || '').slice(0,4)}</span>
-                            <span class="border border-gray-700 px-2 py-0.5 rounded uppercase tracking-wider bg-gray-900/50">Movie</span>
-                        </div>
-                        <button class="action-restricted flex items-center gap-2 text-xs text-gray-400 hover:text-white transition w-max mt-1">
-                            <i class="fa-regular fa-heart"></i> Favorite
-                        </button>
-                    </div>
-                `;
+
+                // Image container
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'relative aspect-[2/3] bg-gradient-to-b from-stone-700 to-gray-900';
+
+                // Image
+                const img = document.createElement('img');
+                img.src = window.AppAPI.posterPath(m.poster_path);
+                img.alt = m.title;  
+                img.className = 'w-full h-full object-cover';
+                imgContainer.appendChild(img);
+
+                // Badge Container for Rating
+                const badge = document.createElement('div');
+                badge.className = 'absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1 backdrop-blur-sm border border-gray-700/50';
+
+                // Star icon
+                const starIcon = document.createElement('i');
+                starIcon.className = 'fa-solid fa-star text-[#ffc107] text-[10px]';
+                badge.appendChild(starIcon);
+
+                // Rating text
+                const ratingText = document.createTextNode(` ${m.vote_average?.toFixed(1) || '0.0'}`);
+                badge.appendChild(ratingText);
+                imgContainer.appendChild(badge);
+
+                card.appendChild(imgContainer);
+
+                // Info container
+                const infoContainer = document.createElement('div');
+                infoContainer.className = 'p-4 flex flex-col gap-3';
+
+                // Title
+                const title = document.createElement('h3');
+                title.className = 'font-bold text-sm truncate';
+                title.textContent = m.title;
+                infoContainer.appendChild(title);
+
+                // Meta Row (Release year and type)
+                const metaRow = document.createElement('div');
+                metaRow.className = 'flex justify-between items-center text-[11px] text-gray-400';
+
+                // Release Date Span
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = (m.release_date || '').slice(0, 4);
+                metaRow.appendChild(dateSpan);
+
+                // Type Span (Movie)
+                const typeSpan = document.createElement('span');
+                typeSpan.className = 'border border-gray-700 px-2 py-0.5 rounded uppercase tracking-wider bg-gray-900/50';
+                typeSpan.textContent = 'Movie';
+                metaRow.appendChild(typeSpan);
+
+                infoContainer.appendChild(metaRow);
+
+                // Favorite button
+                const favBtn = document.createElement('button');
+                favBtn.className = 'action-restricted flex items-center gap-2 text-xs text-gray-400 hover:text-white transition w-max mt-1';
+                
+                // Heart icon
+                const heartIcon = document.createElement('i');
+                heartIcon.className = 'fa-regular fa-heart';
+                favBtn.appendChild(heartIcon);
+
+                // Favorite text
+                const favText = document.createTextNode(' Favorite');
+                favBtn.appendChild(favText);
+
+                // Attach standard click listener to newly created action-restricted button
+                favBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (window.toggleLoginModal) {
+                        window.toggleLoginModal(true, "Please login to save your favorites.");
+                    }
+                });
+
+                infoContainer.appendChild(favBtn);
+                card.appendChild(infoContainer);
+
                 container.appendChild(card);
             });
         }catch(err){
             console.error('Failed to load movies', err);
-            container.innerHTML = '<p class="text-gray-400">Unable to load movies. Check TMDB API key.</p>';
+            container.replaceChildren();
+            const errParam = document.createElement('p');
+            errParam.className = 'text-gray-400';
+            errParam.textContent = 'Unable to load movies. Check TMDB API key.';
+            container.appendChild(errParam);
         }
     }
 
