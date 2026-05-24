@@ -1,27 +1,50 @@
-// TMDB API helper
+// API helper — proxies TMDB via FastAPI and adds Supabase auth headers
 (function(window){
-	const TMDB_BASE = 'https://api.themoviedb.org/3';
-	const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+	const API_BASE = 'http://localhost:8000/api';
 
-	function getKey(){
-		return window.TMDB_API_KEY || '';
+	async function getAuthHeaders() {
+		const { data: { session } } = await supabase.auth.getSession();
+		if (!session) return {};
+		return { Authorization: `Bearer ${session.access_token}` };
 	}
 
 	async function fetchTrendingMovies(){
-		const key = getKey();
-		if(!key) throw new Error('TMDB_API_KEY not set on window');
-		const url = `${TMDB_BASE}/trending/movie/week?api_key=${key}`;
-		const res = await fetch(url);
-		if(!res.ok) throw new Error('TMDB fetch failed');
-		const json = await res.json();
-		return json.results || [];
+		const res = await fetch(`${API_BASE}/movies/trending`);
+		if(!res.ok) throw new Error('Trending fetch failed');
+		return await res.json();
 	}
 
-	function posterPath(path){
-		return path ? IMAGE_BASE + path : '/static/images/placeholder.png';
+	async function fetchMovieDetail(tmdbId){
+		const res = await fetch(`${API_BASE}/movies/${tmdbId}`);
+		if(!res.ok) throw new Error('Movie fetch failed');
+		return await res.json();
+	}
+
+	async function generateRecommendations(preferences){
+		const headers = await getAuthHeaders();
+		const res = await fetch(`${API_BASE}/recommendations/generate`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', ...headers },
+			body: JSON.stringify({ preferences }),
+		});
+		if(!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			throw Object.assign(new Error(err.detail || 'Request failed'), { status: res.status });
+		}
+		return await res.json();
+	}
+
+	async function fetchRecommendationHistory(page = 1, limit = 10){
+		const headers = await getAuthHeaders();
+		const res = await fetch(`${API_BASE}/recommendations/history?page=${page}&limit=${limit}`, { headers });
+		if(!res.ok) throw new Error('History fetch failed');
+		return await res.json();
 	}
 
 	window.AppAPI = window.AppAPI || {};
+	window.AppAPI.getAuthHeaders = getAuthHeaders;
 	window.AppAPI.fetchTrendingMovies = fetchTrendingMovies;
-	window.AppAPI.posterPath = posterPath;
+	window.AppAPI.fetchMovieDetail = fetchMovieDetail;
+	window.AppAPI.generateRecommendations = generateRecommendations;
+	window.AppAPI.fetchRecommendationHistory = fetchRecommendationHistory;
 })(window);
