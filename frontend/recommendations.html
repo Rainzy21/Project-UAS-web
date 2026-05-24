@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recommendations · SJ MovieReview</title>
+    <meta name="description" content="Get personalized AI movie recommendations. Answer 5 questions and our AI curates 10 perfect films for you.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="Static/css/style.css">
+</head>
+<body class="min-h-screen relative flex flex-col">
+
+    <!-- ═══ Navigation ═══════════════════════════════════════════ -->
+    <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
+        <div class="max-w-[1400px] mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
+            </a>
+            <div class="flex items-center gap-6 text-sm">
+                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-film text-xs"></i> All Movies
+                </a>
+                <a href="recommendations.html" class="text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks
+                </a>
+                <div id="nav-guest" class="flex items-center gap-3">
+                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2">
+                        <i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up
+                    </button>
+                </div>
+                <div id="nav-user" class="hidden flex items-center gap-4">
+                    <a href="my-list.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-bookmark text-xs"></i> My List</a>
+                    <a href="profile.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-user text-xs"></i> <span id="nav-user-name">User</span></a>
+                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="verify-banner" class="hidden fixed top-[60px] left-0 right-0 z-20 px-6">
+        <div class="max-w-[1400px] mx-auto verify-banner mt-2">
+            <i class="fa-solid fa-envelope text-sm"></i>
+            <span class="text-sm">Your email is not verified.</span>
+            <button id="resend-verify-btn" class="link-accent text-xs ml-auto">Resend verification email</button>
+        </div>
+    </div>
+
+    <!-- ═══ Main Content ═════════════════════════════════════════ -->
+    <main class="relative z-10 max-w-4xl mx-auto w-full px-6 pt-28 pb-24">
+
+        <!-- Ambient glow -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-2">
+            <div class="section-accent-bar"></div>
+            <h1 class="text-3xl md:text-4xl font-heading font-bold tracking-wide uppercase">AI Recommendations</h1>
+        </div>
+        <p class="text-white/40 text-sm mb-10 ml-7">
+            Answer 5 quick questions and our AI will curate 10 films for you.
+        </p>
+
+        <!-- ── Progress Section ──────────────────────────────── -->
+        <div id="rec-progress" class="mb-10">
+            <!-- Step dots -->
+            <div class="flex justify-center mb-6">
+                <div class="step-dots">
+                    <div class="step-dot active" data-dot="1"></div>
+                    <div class="step-dot-line"></div>
+                    <div class="step-dot" data-dot="2"></div>
+                    <div class="step-dot-line"></div>
+                    <div class="step-dot" data-dot="3"></div>
+                    <div class="step-dot-line"></div>
+                    <div class="step-dot" data-dot="4"></div>
+                    <div class="step-dot-line"></div>
+                    <div class="step-dot" data-dot="5"></div>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="flex justify-between text-xs text-white/30 mb-2">
+                <span>Step <span id="rec-step-current">1</span> of 5</span>
+                <span id="rec-step-label">Genre</span>
+            </div>
+            <div class="progress-track">
+                <div id="rec-progress-bar" class="progress-fill" style="width: 20%"></div>
+            </div>
+        </div>
+
+        <!-- Error banner -->
+        <div id="rec-error" class="hidden mb-6 px-4 py-3 rounded-xl glass text-sm text-red-300 border-red-900/30" style="border-left: 3px solid var(--error);"></div>
+
+        <!-- ── Form ──────────────────────────────────────────── -->
+        <form id="rec-form" class="glass p-8 md:p-10 rounded-2xl relative overflow-hidden">
+            <!-- Glass shimmer top -->
+            <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+            <!-- Step 1: Genre -->
+            <section data-step="1" class="rec-step">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">🎬</span>
+                    <h2 class="text-xl font-heading font-semibold">What genre are you in the mood for?</h2>
+                </div>
+                <p class="text-white/40 text-sm mb-6 ml-10">Pick the primary genre for your night.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3" data-field="genre"></div>
+            </section>
+
+            <!-- Step 2: Mood -->
+            <section data-step="2" class="rec-step hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">🎭</span>
+                    <h2 class="text-xl font-heading font-semibold">What mood should it match?</h2>
+                </div>
+                <p class="text-white/40 text-sm mb-6 ml-10">The tone shapes which films make the cut.</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" data-field="mood"></div>
+            </section>
+
+            <!-- Step 3: Era -->
+            <section data-step="3" class="rec-step hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">📅</span>
+                    <h2 class="text-xl font-heading font-semibold">Which era?</h2>
+                </div>
+                <p class="text-white/40 text-sm mb-6 ml-10">Stick to a decade or open it up.</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" data-field="era"></div>
+            </section>
+
+            <!-- Step 4: Language -->
+            <section data-step="4" class="rec-step hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">🌍</span>
+                    <h2 class="text-xl font-heading font-semibold">Original language?</h2>
+                </div>
+                <p class="text-white/40 text-sm mb-6 ml-10">We won't return dubs or remakes.</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" data-field="language"></div>
+            </section>
+
+            <!-- Step 5: Watching With -->
+            <section data-step="5" class="rec-step hidden">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl">👥</span>
+                    <h2 class="text-xl font-heading font-semibold">Who's watching?</h2>
+                </div>
+                <p class="text-white/40 text-sm mb-6 ml-10">This adjusts content suitability.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3" data-field="watching_with"></div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="flex items-center justify-between mt-10 pt-6 border-t border-white/5">
+                <button type="button" id="rec-back" class="glass-btn glass-btn-secondary px-5 py-2.5 text-sm" disabled>
+                    <i class="fa-solid fa-arrow-left mr-2 text-xs"></i> Back
+                </button>
+                <button type="button" id="rec-next" class="glass-btn glass-btn-primary px-6 py-2.5 text-sm" disabled>
+                    Next <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                </button>
+                <button type="submit" id="rec-submit" class="hidden glass-btn glass-btn-primary px-6 py-2.5 text-sm" disabled>
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2 text-xs"></i> Get Recommendations
+                </button>
+            </div>
+        </form>
+
+        <!-- Loading -->
+        <div id="rec-loading" class="hidden text-center py-20">
+            <div class="spinner mx-auto"></div>
+            <p class="text-white/50 mt-6 text-sm">Curating your picks…</p>
+            <p class="text-white/20 mt-1 text-xs">This usually takes 5–15 seconds.</p>
+        </div>
+
+        <!-- Results -->
+        <section id="rec-results" class="hidden mt-4">
+            <div class="flex justify-between items-end mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="section-accent-bar"></div>
+                    <h2 class="text-2xl font-heading font-bold tracking-wide uppercase">Your Picks</h2>
+                </div>
+                <button type="button" id="rec-restart" class="text-sm text-white/30 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right text-xs"></i> Start Over
+                </button>
+            </div>
+            <div id="rec-results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
+        <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <nav class="flex items-center gap-8 text-sm">
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
+            </nav>
+            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview.</p>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
+        <div class="glass-modal">
+            <div class="p-8">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                </div>
+                <div data-auth-panel="login">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2>
+                        <p class="text-sm text-white/40">Sign in to get AI recommendations</p>
+                    </div>
+                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-login-form" class="space-y-5">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="••••••••" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
+                </div>
+                <div data-auth-panel="signup" class="hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2>
+                        <p class="text-sm text-white/40">Join SJ MovieReview today</p>
+                    </div>
+                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-signup-form" class="space-y-4">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label><input type="text" name="name" class="glass-input" placeholder="Your name" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="Create a password" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label><input type="password" name="confirm_password" class="glass-input" placeholder="Repeat password" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
+                </div>
+                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.APP_CONFIG = {
+            API_BASE: 'http://localhost:8000',
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+        };
+    </script>
+    <script src="Static/js/toast.js"></script>
+    <script src="Static/js/api.js"></script>
+    <script src="Static/js/auth.js"></script>
+    <script src="Static/js/nav.js"></script>
+    <script src="Static/js/movie.js"></script>
+    <script src="Static/js/recommendations.js"></script>
+</body>
+</html>

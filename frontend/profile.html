@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile · SJ MovieReview</title>
+    <meta name="description" content="Manage your SJ MovieReview profile, change password, and account settings.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="Static/css/style.css">
+</head>
+<body class="min-h-screen relative flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
+        <div class="max-w-[1400px] mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
+            </a>
+            <div class="flex items-center gap-6 text-sm">
+                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-film text-xs"></i> All Movies</a>
+                <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks</a>
+                <div id="nav-guest" class="flex items-center gap-3">
+                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up</button>
+                </div>
+                <div id="nav-user" class="hidden flex items-center gap-4">
+                    <a href="my-list.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-bookmark text-xs"></i> My List</a>
+                    <a href="profile.html" class="text-white transition flex items-center gap-2"><i class="fa-solid fa-user text-xs"></i> <span id="nav-user-name">User</span></a>
+                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="verify-banner" class="hidden fixed top-[60px] left-0 right-0 z-20 px-6">
+        <div class="max-w-[1400px] mx-auto verify-banner mt-2">
+            <i class="fa-solid fa-envelope text-sm"></i>
+            <span class="text-sm">Your email is not verified.</span>
+            <button id="resend-verify-btn" class="link-accent text-xs ml-auto">Resend verification email</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto w-full px-6 py-24 min-h-screen relative z-10">
+        <div class="mb-10 mt-10">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="section-accent-bar"></div>
+                <h1 class="text-3xl font-heading font-bold tracking-wide uppercase">Profile</h1>
+            </div>
+            <p class="text-white/40 text-sm ml-7">Manage your account and preferences.</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div id="profile-card" class="glass p-8 rounded-2xl mb-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+            <div class="flex items-start gap-6">
+                <!-- Avatar -->
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-[#ffc107] to-[#ff9800] flex items-center justify-center text-3xl font-bold text-black flex-shrink-0 shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-user text-xl"></i>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <!-- Name -->
+                    <div class="flex items-center gap-3 mb-1">
+                        <h2 id="profile-name" class="text-xl font-heading font-bold">Loading...</h2>
+                        <button id="edit-name-btn" class="text-white/30 hover:text-white transition text-sm">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Name edit group -->
+                    <div id="name-edit-group" class="hidden flex items-center gap-2 mb-2">
+                        <input id="name-input" type="text" class="glass-input py-1.5 text-sm flex-1" placeholder="Your name">
+                        <button id="save-name-btn" class="glass-btn glass-btn-primary text-xs px-3 py-1.5">Save</button>
+                        <button id="cancel-name-btn" class="glass-btn glass-btn-secondary text-xs px-3 py-1.5">Cancel</button>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="profile-email" class="text-white/50 text-sm"></span>
+                        <span id="profile-verified-badge" class="text-xs"></span>
+                    </div>
+
+                    <!-- Member since -->
+                    <span class="text-white/30 text-xs">Member since <span id="profile-since"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <a href="my-list.html" class="glass p-5 rounded-xl flex items-center gap-4 hover:bg-white/[0.06] transition group">
+                <div class="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:border-blue-500/40 transition">
+                    <i class="fa-solid fa-bookmark text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold">My List</h3>
+                    <p class="text-xs text-white/40">View your saved movies</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-white/20 ml-auto text-xs"></i>
+            </a>
+            <a href="history.html" class="glass p-5 rounded-xl flex items-center gap-4 hover:bg-white/[0.06] transition group">
+                <div class="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:border-purple-500/40 transition">
+                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold">Recommendation History</h3>
+                    <p class="text-xs text-white/40">View past AI picks</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-white/20 ml-auto text-xs"></i>
+            </a>
+        </div>
+
+        <!-- Change Password -->
+        <div class="glass p-8 rounded-2xl mb-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+            <h3 class="text-lg font-heading font-semibold mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-lock text-sm text-white/40"></i> Change Password
+            </h3>
+            <p id="pw-error" class="hidden text-xs text-red-400 mb-4"></p>
+            <form id="change-password-form" class="space-y-4 max-w-md">
+                <div>
+                    <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Current Password</label>
+                    <input type="password" name="current_password" class="glass-input" placeholder="Enter current password" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">New Password</label>
+                    <input type="password" name="new_password" class="glass-input" placeholder="Enter new password" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm New Password</label>
+                    <input type="password" name="confirm_password" class="glass-input" placeholder="Repeat new password" required>
+                </div>
+                <button type="submit" class="glass-btn glass-btn-primary text-sm px-6 py-2.5 mt-2">Update Password</button>
+            </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="glass p-8 rounded-2xl relative overflow-hidden" style="border-color: rgba(248, 113, 113, 0.1);">
+            <h3 class="text-lg font-heading font-semibold mb-2 text-red-400 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-sm"></i> Danger Zone
+            </h3>
+            <p class="text-white/40 text-sm mb-6">Permanently delete your account and all saved data. This action cannot be undone.</p>
+            <button id="delete-account-btn" class="glass-btn glass-btn-danger text-sm px-6 py-2.5">
+                <i class="fa-solid fa-trash-can text-xs"></i> Delete Account
+            </button>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="glass-modal-overlay hidden">
+        <div class="glass-modal max-w-sm">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-heading font-bold mb-2">Delete Account?</h2>
+                <p class="text-white/40 text-sm mb-6">This will permanently delete your account and all saved movies. Enter your password to confirm.</p>
+                <input id="delete-password" type="password" class="glass-input mb-4" placeholder="Enter your password">
+                <div class="flex gap-3 justify-center">
+                    <button id="delete-cancel" class="glass-btn glass-btn-secondary text-sm px-5 py-2.5">Cancel</button>
+                    <button id="delete-confirm" class="glass-btn glass-btn-danger text-sm px-5 py-2.5">Delete Forever</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
+        <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <nav class="flex items-center gap-8 text-sm">
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
+            </nav>
+            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview.</p>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
+        <div class="glass-modal">
+            <div class="p-8">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                </div>
+                <div data-auth-panel="login">
+                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2><p class="text-sm text-white/40">Sign in to your account</p></div>
+                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-login-form" class="space-y-5">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="••••••••" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
+                </div>
+                <div data-auth-panel="signup" class="hidden">
+                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2><p class="text-sm text-white/40">Join SJ MovieReview today</p></div>
+                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-signup-form" class="space-y-4">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label><input type="text" name="name" class="glass-input" placeholder="Your name" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="Create a password" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label><input type="password" name="confirm_password" class="glass-input" placeholder="Repeat password" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
+                </div>
+                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.APP_CONFIG = {
+            API_BASE: 'http://localhost:8000',
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+        };
+    </script>
+    <script src="Static/js/toast.js"></script>
+    <script src="Static/js/api.js"></script>
+    <script src="Static/js/auth.js"></script>
+    <script src="Static/js/nav.js"></script>
+    <script src="Static/js/profile.js"></script>
+</body>
+</html>

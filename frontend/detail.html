@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Detail · SJ MovieReview</title>
+    <meta name="description" content="View movie details, trailers, cast information and save to your watchlist.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="Static/css/style.css">
+</head>
+<body class="min-h-screen relative flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
+        <div class="max-w-[1400px] mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
+            </a>
+            <div class="flex items-center gap-6 text-sm">
+                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-film text-xs"></i> All Movies</a>
+                <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks</a>
+                <div id="nav-guest" class="flex items-center gap-3">
+                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up</button>
+                </div>
+                <div id="nav-user" class="hidden flex items-center gap-4">
+                    <a href="my-list.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-bookmark text-xs"></i> My List</a>
+                    <a href="profile.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-user text-xs"></i> <span id="nav-user-name">User</span></a>
+                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="verify-banner" class="hidden fixed top-[60px] left-0 right-0 z-20 px-6">
+        <div class="max-w-[1400px] mx-auto verify-banner mt-2">
+            <i class="fa-solid fa-envelope text-sm"></i>
+            <span class="text-sm">Your email is not verified.</span>
+            <button id="resend-verify-btn" class="link-accent text-xs ml-auto">Resend verification email</button>
+        </div>
+    </div>
+
+    <!-- Backdrop Hero -->
+    <div id="detail-backdrop" class="relative min-h-[70vh] flex items-end">
+        <div id="backdrop-img" class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-color: #0a0a0f;"></div>
+        <div class="absolute inset-0 bg-overlay-full"></div>
+
+        <!-- Ambient glow -->
+        <div class="absolute bottom-0 left-1/4 w-[400px] h-[300px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div class="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-10 pb-12">
+            <div class="flex flex-col md:flex-row gap-8 items-end">
+                <!-- Poster -->
+                <div id="detail-poster-wrap" class="w-48 md:w-56 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/10 hidden">
+                    <img id="detail-poster" src="" alt="" class="w-full aspect-[2/3] object-cover">
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                    <div id="detail-genres" class="flex flex-wrap gap-2 mb-3"></div>
+                    <h1 id="detail-title" class="text-4xl md:text-5xl font-heading font-bold mb-4 leading-tight">Loading...</h1>
+                    <div id="detail-meta" class="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-6"></div>
+                    <p id="detail-overview" class="text-white/50 text-sm leading-relaxed max-w-2xl mb-8"></p>
+                    <div class="flex items-center gap-4">
+                        <button id="detail-save-btn" class="glass-btn glass-btn-primary py-3 px-6 text-sm">
+                            <i class="fa-solid fa-plus"></i> Save to My List
+                        </button>
+                        <a id="detail-trailer-btn" href="#" target="_blank" class="glass-btn glass-btn-secondary py-3 px-6 text-sm hidden">
+                            <i class="fa-solid fa-play"></i> Watch Trailer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cast & Info Section -->
+    <main class="max-w-[1400px] mx-auto w-full px-6 md:px-10 py-12 relative z-10">
+        <!-- Cast -->
+        <div id="detail-cast-section" class="hidden mb-12">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="section-accent-bar"></div>
+                <h2 class="text-xl font-heading font-semibold uppercase tracking-wide">Cast</h2>
+            </div>
+            <div id="detail-cast" class="flex gap-4 overflow-x-auto no-scrollbar pb-4"></div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="detail-info-card" class="glass p-6 rounded-xl hidden">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-white/40 mb-4">Movie Info</h3>
+                <div id="detail-info-list" class="space-y-3 text-sm"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
+        <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <nav class="flex items-center gap-8 text-sm">
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
+            </nav>
+            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview.</p>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
+        <div class="glass-modal">
+            <div class="p-8">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                </div>
+                <div data-auth-panel="login">
+                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2><p class="text-sm text-white/40">Sign in to your account</p></div>
+                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-login-form" class="space-y-5">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="••••••••" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
+                </div>
+                <div data-auth-panel="signup" class="hidden">
+                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2><p class="text-sm text-white/40">Join SJ MovieReview today</p></div>
+                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-signup-form" class="space-y-4">
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label><input type="text" name="name" class="glass-input" placeholder="Your name" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="Create a password" required></div>
+                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label><input type="password" name="confirm_password" class="glass-input" placeholder="Repeat password" required></div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
+                </div>
+                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.APP_CONFIG = {
+            API_BASE: 'http://localhost:8000',
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+        };
+    </script>
+    <script src="Static/js/toast.js"></script>
+    <script src="Static/js/api.js"></script>
+    <script src="Static/js/auth.js"></script>
+    <script src="Static/js/nav.js"></script>
+    <script src="Static/js/movie.js"></script>
+
+    <script>
+    (async function() {
+        const params = new URLSearchParams(window.location.search);
+        const tmdbId = params.get('id');
+        if (!tmdbId) {
+            document.getElementById('detail-title').textContent = 'Movie not found';
+            return;
+        }
+
+        try {
+            const movie = await window.AppAPI.fetchMovieDetail(tmdbId);
+
+            // Title
+            document.getElementById('detail-title').textContent = movie.title;
+            document.title = `${movie.title} · SJ MovieReview`;
+
+            // Backdrop
+            if (movie.backdrop_path) {
+                document.getElementById('backdrop-img').style.backgroundImage =
+                    `url(${window.AppAPI.backdropUrl(movie.backdrop_path)})`;
+            }
+
+            // Poster
+            if (movie.poster_path) {
+                const posterWrap = document.getElementById('detail-poster-wrap');
+                posterWrap.classList.remove('hidden');
+                const posterImg = document.getElementById('detail-poster');
+                posterImg.src = window.AppAPI.posterUrl(movie.poster_path);
+                posterImg.alt = movie.title;
+            }
+
+            // Genres
+            const genresEl = document.getElementById('detail-genres');
+            (movie.genres || []).forEach(g => {
+                const pill = document.createElement('span');
+                pill.className = 'glass-pill text-xs';
+                pill.textContent = g.name;
+                genresEl.appendChild(pill);
+            });
+
+            // Meta
+            const metaEl = document.getElementById('detail-meta');
+            const rating = (movie.vote_average || 0).toFixed(1);
+            const year = (movie.release_date || '').slice(0, 4);
+            const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '';
+
+            metaEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-star text-[#ffc107]"></i>
+                    <span class="font-bold text-white text-base">${rating}</span><span class="text-xs">/10</span>
+                </div>
+                ${year ? `<span>${year}</span>` : ''}
+                ${runtime ? `<span>${runtime}</span>` : ''}
+                ${movie.original_language ? `<span class="glass-pill text-[10px] uppercase">${movie.original_language}</span>` : ''}
+            `;
+
+            // Overview
+            document.getElementById('detail-overview').textContent = movie.overview || '';
+
+            // Trailer
+            if (movie.videos && movie.videos.results) {
+                const trailer = movie.videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                if (trailer) {
+                    const trailerBtn = document.getElementById('detail-trailer-btn');
+                    trailerBtn.href = `https://www.youtube.com/watch?v=${trailer.key}`;
+                    trailerBtn.classList.remove('hidden');
+                }
+            }
+
+            // Cast
+            if (movie.credits && movie.credits.cast && movie.credits.cast.length > 0) {
+                const castSection = document.getElementById('detail-cast-section');
+                castSection.classList.remove('hidden');
+                const castEl = document.getElementById('detail-cast');
+                movie.credits.cast.slice(0, 10).forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'flex-shrink-0 w-24 text-center';
+                    const imgSrc = c.profile_path
+                        ? `https://image.tmdb.org/t/p/w185${c.profile_path}`
+                        : '';
+                    card.innerHTML = `
+                        <div class="w-20 h-20 rounded-full mx-auto mb-2 overflow-hidden bg-white/5 border border-white/10">
+                            ${imgSrc ? `<img src="${imgSrc}" alt="${c.name}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-white/20"><i class="fa-solid fa-user"></i></div>'}
+                        </div>
+                        <p class="text-xs font-medium truncate text-white/70">${c.name}</p>
+                        <p class="text-[10px] text-white/30 truncate">${c.character || ''}</p>
+                    `;
+                    castEl.appendChild(card);
+                });
+            }
+
+            // Info card
+            const infoCard = document.getElementById('detail-info-card');
+            infoCard.classList.remove('hidden');
+            const infoList = document.getElementById('detail-info-list');
+            const infos = [
+                { label: 'Status', value: movie.status },
+                { label: 'Budget', value: movie.budget ? `$${(movie.budget / 1_000_000).toFixed(1)}M` : null },
+                { label: 'Revenue', value: movie.revenue ? `$${(movie.revenue / 1_000_000).toFixed(1)}M` : null },
+                { label: 'Language', value: movie.spoken_languages ? movie.spoken_languages.map(l => l.english_name).join(', ') : null },
+                { label: 'Production', value: movie.production_companies ? movie.production_companies.map(p => p.name).slice(0, 3).join(', ') : null },
+            ].filter(i => i.value);
+
+            infos.forEach(info => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between';
+                row.innerHTML = `<span class="text-white/40">${info.label}</span><span class="text-white/70 text-right">${info.value}</span>`;
+                infoList.appendChild(row);
+            });
+
+            // Save button
+            const saveBtn = document.getElementById('detail-save-btn');
+            saveBtn.addEventListener('click', () => {
+                window.MovieUI.handleSave(tmdbId, saveBtn, {
+                    title: movie.title,
+                    poster_path: movie.poster_path,
+                    vote_average: movie.vote_average,
+                    release_date: movie.release_date,
+                    genres: (movie.genres || []).map(g => g.name),
+                });
+            });
+
+        } catch (err) {
+            console.error('Failed to load movie detail', err);
+            document.getElementById('detail-title').textContent = 'Movie not found';
+            document.getElementById('detail-overview').textContent = 'Unable to load movie details. Please try again.';
+        }
+    })();
+    </script>
+</body>
+</html>

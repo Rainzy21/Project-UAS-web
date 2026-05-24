@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJ MovieReview — AI-Powered Movie Recommendations</title>
+    <meta name="description" content="Discover your next favorite film with AI-powered recommendations. Browse trending movies, get personalized picks, and save your watchlist.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="Static/css/style.css">
+</head>
+<body class="min-h-screen relative flex flex-col">
+
+    <!-- ═══ Navigation ═══════════════════════════════════════════ -->
+    <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
+        <div class="max-w-[1400px] mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
+            </a>
+
+            <div class="flex items-center gap-6 text-sm">
+                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-film text-xs"></i> All Movies
+                </a>
+                <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks
+                </a>
+
+                <!-- Guest -->
+                <div id="nav-guest" class="flex items-center gap-3">
+                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2">
+                        <i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up
+                    </button>
+                </div>
+
+                <!-- Logged in -->
+                <div id="nav-user" class="hidden flex items-center gap-4">
+                    <a href="my-list.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                        <i class="fa-regular fa-bookmark text-xs"></i> My List
+                    </a>
+                    <a href="profile.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                        <i class="fa-regular fa-user text-xs"></i> <span id="nav-user-name">User</span>
+                    </a>
+                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Email Verify Banner -->
+    <div id="verify-banner" class="hidden fixed top-[60px] left-0 right-0 z-20 px-6">
+        <div class="max-w-[1400px] mx-auto verify-banner mt-2">
+            <i class="fa-solid fa-envelope text-sm"></i>
+            <span class="text-sm">Your email is not verified.</span>
+            <button id="resend-verify-btn" class="link-accent text-xs ml-auto">Resend verification email</button>
+        </div>
+    </div>
+
+    <!-- ═══ Hero Section ═════════════════════════════════════════ -->
+    <div class="relative min-h-screen flex flex-col justify-center">
+        <div class="absolute inset-0 z-0 h-full w-full bg-[url('https://i.pinimg.com/1200x/c5/35/23/c53523bc48e232c61683ccfc71ada4c9.jpg')] bg-cover bg-center bg-no-repeat"></div>
+        <div class="absolute inset-0 z-0 bg-overlay"></div>
+
+        <!-- Ambient glow -->
+        <div class="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+        <main class="relative z-10 px-6 md:px-10 max-w-4xl pt-24 pb-24">
+            <div class="flex items-center gap-3 text-sm mb-6">
+                <span class="bg-gradient-to-r from-[#ffc107] to-[#ff9800] text-black font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20">Featured</span>
+                <span class="text-white/50">Science Fiction • 2026</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-serif-title font-black leading-tight mb-6 tracking-wide">
+                ECHOES OF<br>ETERNITY
+            </h1>
+            <div class="flex items-center gap-6 text-sm text-white/50 mb-8">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-star text-[#ffc107]"></i>
+                    <span class="font-bold text-white text-base">8.9</span><span class="text-xs">/10</span>
+                </div>
+                <span>2h 34m</span>
+                <span class="glass-pill">PG-13</span>
+            </div>
+            <p class="text-white/50 text-base leading-relaxed max-w-2xl mb-10">
+                When a dormant alien structure on Mars suddenly activates, a team of specialized researchers must decode its purpose before it triggers an event that could alter the fabric of human existence forever. A visually stunning journey...
+            </p>
+            <div class="flex items-center gap-4">
+                <button class="glass-btn glass-btn-primary py-3 px-6 text-sm">
+                    <i class="fa-solid fa-play"></i> Watch Trailer
+                </button>
+                <button class="glass-btn glass-btn-secondary py-3 px-6 text-sm action-restricted">
+                    <i class="fa-solid fa-plus"></i> Watchlist
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══ What to Watch ════════════════════════════════════════ -->
+    <div class="max-w-[1400px] mx-auto w-full px-6 md:px-8 py-16 relative z-10">
+        <div class="flex justify-between items-end mb-8">
+            <div class="flex items-center gap-3">
+                <div class="section-accent-bar"></div>
+                <h2 class="text-2xl md:text-3xl font-heading font-bold tracking-wide uppercase">What to Watch</h2>
+            </div>
+            <a href="movies.html" class="link-accent text-sm">Browse All &rarr;</a>
+        </div>
+
+        <div id="movie-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <!-- Movies injected by movie.js -->
+        </div>
+    </div>
+
+    <!-- ═══ CTA Section ══════════════════════════════════════════ -->
+    <div class="relative z-10 py-20 px-6">
+        <div class="max-w-3xl mx-auto text-center">
+            <div class="glass p-10 md:p-16 rounded-2xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-purple-500/5 pointer-events-none"></div>
+                <div class="relative">
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-4">Find Your Perfect Movie</h2>
+                    <p class="text-white/50 mb-8 max-w-lg mx-auto">Answer 5 quick questions and our AI will curate 10 personalized film recommendations just for you.</p>
+                    <a href="recommendations.html" class="glass-btn glass-btn-primary py-3 px-8 text-sm inline-flex">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Recommendations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Footer ═══════════════════════════════════════════════ -->
+    <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
+        <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <nav class="flex items-center gap-8 text-sm">
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Help Center</a>
+            </nav>
+            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview. A fictional movie database.</p>
+        </div>
+    </footer>
+
+    <!-- ═══ Chat Box ═════════════════════════════════════════════ -->
+    <div class="fixed bottom-6 right-6 flex items-end gap-3 z-40" id="chat-fab-group">
+        <button class="w-8 h-8 bg-white/5 text-white/40 rounded-full flex items-center justify-center hover:bg-white/10 transition border border-white/10 backdrop-blur" id="help-btn" title="Help Center">
+            <i class="fa-solid fa-question text-[10px]"></i>
+        </button>
+        <button class="w-14 h-14 bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black rounded-full flex items-center justify-center hover:shadow-lg hover:shadow-amber-500/30 transition shadow-lg shadow-amber-500/20" id="chat-toggle-btn" title="AI Support Chat">
+            <i class="fa-solid fa-comment text-xl" id="chat-toggle-icon"></i>
+        </button>
+    </div>
+
+    <div id="chat-panel" class="fixed bottom-24 right-6 w-[380px] max-h-[520px] rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#ffc107] to-[#ff9800] rounded-full flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-robot text-black text-base"></i>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold text-sm leading-tight">AI Support</h4>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-emerald-400 text-[11px] font-medium">Online</span>
+                    </div>
+                </div>
+            </div>
+            <button id="chat-close-btn" class="text-white/30 hover:text-white transition p-1 rounded hover:bg-white/5">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
+        <div id="chat-messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-4 no-scrollbar" style="min-height: 260px; max-height: 320px;"></div>
+
+        <div id="chat-suggestions" class="px-5 pb-3">
+            <p class="text-[10px] text-white/30 uppercase tracking-widest font-semibold mb-2">Coba Tanyakan</p>
+            <div class="flex flex-wrap gap-2">
+                <button class="chat-suggestion text-[11px] text-white/50 glass-pill hover:text-white transition">🎬 Film trending minggu ini?</button>
+                <button class="chat-suggestion text-[11px] text-white/50 glass-pill hover:text-white transition">🍿 Rekomendasi film horror</button>
+                <button class="chat-suggestion text-[11px] text-white/50 glass-pill hover:text-white transition">⭐ Film rating tertinggi 2024</button>
+            </div>
+        </div>
+
+        <div class="px-4 py-3 border-t border-white/5">
+            <form id="chat-form" class="flex items-center gap-2">
+                <input type="text" id="chat-input" class="glass-input flex-1 text-sm py-2.5" placeholder="Type your message..." autocomplete="off" maxlength="500">
+                <button type="submit" id="chat-send-btn" class="w-10 h-10 bg-gradient-to-r from-[#ffc107] to-[#ff9800] hover:shadow-lg hover:shadow-amber-500/30 text-black rounded-lg flex items-center justify-center transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                    <i class="fa-solid fa-paper-plane text-sm"></i>
+                </button>
+            </form>
+            <p class="text-[9px] text-white/20 text-center mt-2">Powered by DeepSeek AI &bull; Responses may not always be accurate</p>
+        </div>
+    </div>
+
+    <!-- ═══ Auth Modal ═══════════════════════════════════════════ -->
+    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
+        <div class="glass-modal">
+            <div class="p-8">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                </div>
+
+                <!-- Login Panel -->
+                <div data-auth-panel="login">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2>
+                        <p class="text-sm text-white/40">Sign in to your account</p>
+                    </div>
+                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-login-form" class="space-y-5">
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-envelope text-white/30 text-sm"></i></div>
+                                <input type="email" name="email" class="glass-input glass-input-icon" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase">Password</label>
+                                <button type="button" onclick="Auth.showModal('forgot-password')" class="text-[11px] link-accent">Forgot Password?</button>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
+                                <input type="password" name="password" class="glass-input glass-input-icon" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
+                </div>
+
+                <!-- Signup Panel -->
+                <div data-auth-panel="signup" class="hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2>
+                        <p class="text-sm text-white/40">Join SJ MovieReview today</p>
+                    </div>
+                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
+                    <form id="auth-signup-form" class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-user text-white/30 text-sm"></i></div>
+                                <input type="text" name="name" class="glass-input glass-input-icon" placeholder="Your name" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-envelope text-white/30 text-sm"></i></div>
+                                <input type="email" name="email" class="glass-input glass-input-icon" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
+                                <input type="password" name="password" class="glass-input glass-input-icon" placeholder="Create a password" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
+                                <input type="password" name="confirm_password" class="glass-input glass-input-icon" placeholder="Repeat your password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
+                </div>
+
+                <!-- Forgot Password Panel -->
+                <div data-auth-panel="forgot-password" class="hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Reset Password</h2>
+                        <p class="text-sm text-white/40">We'll send you a reset link</p>
+                    </div>
+                    <form id="auth-forgot-form" class="space-y-5">
+                        <div>
+                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
+                            <input type="email" name="email" class="glass-input" placeholder="Enter your email" required>
+                        </div>
+                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Send Reset Link</button>
+                    </form>
+                    <hr class="glass-divider">
+                    <p class="text-center text-sm text-white/40"><button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">&larr; Back to Login</button></p>
+                </div>
+
+                <!-- Forgot Sent Panel -->
+                <div data-auth-panel="forgot-sent" class="hidden">
+                    <div class="text-center py-6">
+                        <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-check text-emerald-400 text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-heading font-bold text-white mb-2">Check Your Email</h2>
+                        <p class="text-sm text-white/40 max-w-xs mx-auto">If an account exists with that email, we've sent a password reset link.</p>
+                        <button type="button" onclick="Auth.hideModal()" class="glass-btn glass-btn-secondary mt-6 text-sm">Close</button>
+                    </div>
+                </div>
+
+                <!-- Close button -->
+                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Scripts ══════════════════════════════════════════════ -->
+    <script>
+        window.APP_CONFIG = {
+            API_BASE: 'http://localhost:8000',
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+        };
+    </script>
+    <script src="Static/js/toast.js"></script>
+    <script src="Static/js/api.js"></script>
+    <script src="Static/js/auth.js"></script>
+    <script src="Static/js/nav.js"></script>
+    <script src="Static/js/movie.js"></script>
+    <script src="Static/js/chat.js"></script>
+</body>
+</html>
