@@ -1,26 +1,62 @@
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
 
-class MovieBase(BaseModel):
+
+# ── Movie ───────────────────────────────────────────────────────────────────
+
+class MovieOut(BaseModel):
+    tmdb_id: int
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    release_year: Optional[int] = None
-    rating: Optional[float] = 0.0
+    overview: Optional[str] = None
     poster_url: Optional[str] = None
+    rating: Optional[float] = None
+    year: Optional[int] = None
+    language: Optional[str] = None
+    genres: Optional[list] = None
+
+    model_config = {"from_attributes": True}
 
 
-class MovieCreate(MovieBase):
-    pass
+# ── Saved Movie ─────────────────────────────────────────────────────────────
+
+class SavedMovieCreate(BaseModel):
+    """Single item within a batch save request."""
+    tmdb_id: int
+    note: Optional[str] = None
+    tag: Optional[str] = None
 
 
-class MovieUpdate(MovieBase):
-    title: Optional[str] = None
+class SavedMovieListCreate(BaseModel):
+    """Request body for POST /api/movies/save."""
+    movies: list[SavedMovieCreate]
 
 
-class MovieOut(MovieBase):
-    id: int
+class SavedMovieOut(BaseModel):
+    id: str
+    tmdb_id: int
+    note: Optional[str] = None
+    tag: Optional[str] = None
+    saved_at: datetime
+    movie: Optional[MovieOut] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class SavedMovieUpdate(BaseModel):
+    note: Optional[str] = None
+    tag: Optional[str] = None
+
+
+# ── Saved Status ─────────────────────────────────────────────────────────────
+
+class SavedStatusItem(BaseModel):
+    saved: bool
+    saved_id: Optional[str] = None
+
+
+class SavedStatusResponse(BaseModel):
+    """Dict[tmdb_id_str, SavedStatusItem] — returned by GET /saved/status."""
+    pass  # actual response is dict[str, SavedStatusItem]
+
