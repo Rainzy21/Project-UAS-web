@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Image
                 const img = document.createElement('img');
-                img.src = window.AppAPI.posterPath(m.poster_path);
+                img.src = window.AppAPI.posterUrl(m.poster_path);
                 img.alt = m.title;  
                 img.className = 'w-full h-full object-cover';
                 imgContainer.appendChild(img);

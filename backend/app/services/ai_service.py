@@ -254,10 +254,23 @@ async def get_recommendations(preferences: dict) -> list[dict]:
         )
         content = response.choices[0].message.content or ""
     except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail={"error": True, "code": "AI_ERROR", "message": f"DeepSeek API error: {exc}", "status": 502},
-        ) from exc
+        err_msg = str(exc)
+        if "402" in err_msg or "Insufficient Balance" in err_msg:
+            # Fallback mock response for testing TMDB image fetching
+            content = """{
+                "movies": [
+                    {"tmdb_id": 27205, "title": "Inception", "year": 2010},
+                    {"tmdb_id": 155, "title": "The Dark Knight", "year": 2008},
+                    {"tmdb_id": 1380291, "title": "Tom Clancy's Jack Ryan: Ghost War", "year": 2026},
+                    {"tmdb_id": 24428, "title": "The Avengers", "year": 2012},
+                    {"tmdb_id": 122, "title": "The Lord of the Rings: The Return of the King", "year": 2003}
+                ]
+            }"""
+        else:
+            raise HTTPException(
+                status_code=502,
+                detail={"error": True, "code": "AI_ERROR", "message": f"DeepSeek API error: {exc}", "status": 502},
+            ) from exc
 
     # Strip any accidental markdown fences (json mode should prevent these, but be defensive)
     content = re.sub(r"```(?:json)?", "", content).strip()

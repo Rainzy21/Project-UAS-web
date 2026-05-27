@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Static/css/style.css">
+    <link rel="stylesheet" href="Static/css/landing.css">
 </head>
 <body class="min-h-screen relative flex flex-col">
 
@@ -15,11 +16,10 @@
     <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
         <div class="max-w-[1400px] mx-auto flex justify-between items-center">
             <a href="/" class="flex items-center gap-3 group">
-                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <div class="lp-logo-badge">SJ</div>
                 <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
             </a>
             <div class="flex items-center gap-6 text-sm">
-                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-film text-xs"></i> All Movies</a>
                 <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks</a>
                 <div id="nav-guest" class="flex items-center gap-3">
                     <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up</button>
@@ -57,7 +57,7 @@
 
             <div class="flex items-start gap-6">
                 <!-- Avatar -->
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-[#ffc107] to-[#ff9800] flex items-center justify-center text-3xl font-bold text-black flex-shrink-0 shadow-lg shadow-amber-500/20">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white flex-shrink-0 shadow-lg" style="background: var(--lp-accent-grad); box-shadow: 0 0 24px var(--lp-accent-glow-soft);">
                     <i class="fa-solid fa-user text-xl"></i>
                 </div>
 
@@ -183,7 +183,7 @@
         <div class="glass-modal">
             <div class="p-8">
                 <div class="flex justify-center mb-6">
-                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                    <div class="lp-logo-badge text-2xl rounded-lg px-3 py-1">SJ</div>
                 </div>
                 <div data-auth-panel="login">
                     <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2><p class="text-sm text-white/40">Sign in to your account</p></div>
@@ -214,10 +214,14 @@
         </div>
     </div>
 
+    <!-- Supabase JS client (must load FIRST) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         window.APP_CONFIG = {
             API_BASE: 'http://localhost:8000',
-            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905',
+            SUPABASE_URL: 'https://nwvvwghvdnbrltektuno.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dnZ3Z2h2ZG5icmx0ZWt0dW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjQ2MDMsImV4cCI6MjA5NTIwMDYwM30.Brl67HzxcSoYrs9AtY8kVtofLLa0k9bJAdsmpIpb7Ns'
         };
     </script>
     <script src="Static/js/toast.js"></script>

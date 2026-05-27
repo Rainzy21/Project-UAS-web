@@ -1,7 +1,7 @@
 import os
 from pydantic_settings import BaseSettings
 
-_ENV_FILE = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+_ENV_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env")
 
 
 class Settings(BaseSettings):

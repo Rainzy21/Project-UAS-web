@@ -7,7 +7,7 @@
 
     {# ── Header ───────────────────────────────────────────── #}
     <div class="flex items-center gap-3 mb-2">
-        <div class="w-1 h-8 bg-[#ffc107]"></div>
+        <div class="w-1 h-8" style="background: linear-gradient(135deg,#8b0000,#e50000); border-radius:4px;"></div>
         <h1 class="text-3xl md:text-4xl font-bold tracking-wider uppercase">AI Recommendations</h1>
     </div>
     <p class="text-gray-400 text-sm mb-10 ml-4">
@@ -21,7 +21,7 @@
             <span id="rec-step-label">Genre</span>
         </div>
         <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
-            <div id="rec-progress-bar" class="h-full bg-[#ffc107] transition-all duration-300" style="width: 20%"></div>
+            <div id="rec-progress-bar" class="h-full transition-all duration-300" style="width: 20%; background: linear-gradient(135deg,#8b0000,#e50000);"></div>
         </div>
     </div>
 
@@ -76,12 +76,12 @@
                 <i class="fa-solid fa-arrow-left mr-2"></i> Back
             </button>
             <button type="button" id="rec-next"
-                class="px-6 py-2.5 rounded bg-[#ffc107] text-black font-bold hover:bg-yellow-500 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                class="px-6 py-2.5 rounded text-white font-bold hover:brightness-110 transition disabled:opacity-30 disabled:cursor-not-allowed" style="background: linear-gradient(135deg,#8b0000,#e50000);"
                 disabled>
                 Next <i class="fa-solid fa-arrow-right ml-2"></i>
             </button>
             <button type="submit" id="rec-submit"
-                class="hidden px-6 py-2.5 rounded bg-[#ffc107] text-black font-bold hover:bg-yellow-500 transition disabled:opacity-30 disabled:cursor-not-allowed">
+                class="hidden px-6 py-2.5 rounded text-white font-bold hover:brightness-110 transition disabled:opacity-30 disabled:cursor-not-allowed" style="background: linear-gradient(135deg,#8b0000,#e50000);">
                 <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Get Recommendations
             </button>
         </div>
@@ -89,7 +89,7 @@
 
     {# ── Loading state ───────────────────────────────────── #}
     <div id="rec-loading" class="hidden text-center py-20">
-        <div class="inline-block w-12 h-12 border-4 border-gray-700 border-t-[#ffc107] rounded-full animate-spin"></div>
+        <div class="inline-block w-12 h-12 border-4 border-gray-700 border-t-[#e50000] rounded-full animate-spin"></div>
         <p class="text-gray-300 mt-6 text-sm">Curating your picks…</p>
         <p class="text-gray-500 mt-1 text-xs">This usually takes 5–15 seconds.</p>
     </div>
@@ -98,7 +98,7 @@
     <section id="rec-results" class="hidden mt-4">
         <div class="flex justify-between items-end mb-6">
             <div class="flex items-center gap-3">
-                <div class="w-1 h-8 bg-[#ffc107]"></div>
+                <div class="w-1 h-8" style="background: linear-gradient(135deg,#8b0000,#e50000); border-radius:4px;"></div>
                 <h2 class="text-2xl font-bold tracking-wider uppercase">Your Picks</h2>
             </div>
             <button type="button" id="rec-restart"
@@ -129,9 +129,9 @@
         color: #fff;
     }
     .rec-option.selected {
-        border-color: #ffc107;
-        background: rgba(255, 193, 7, 0.1);
-        color: #ffc107;
+        border-color: #e50000;
+        background: rgba(229, 0, 0, 0.1);
+        color: #e50000;
         font-weight: 600;
     }
 </style>
@@ -289,7 +289,7 @@
             <div class="relative aspect-[2/3] bg-gradient-to-b from-stone-700 to-gray-900">
                 ${poster ? `<img src="${poster}" alt="${title}" class="w-full h-full object-cover" loading="lazy">` : ''}
                 <div class="absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1 backdrop-blur-sm border border-gray-700/50">
-                    <i class="fa-solid fa-star text-[#ffc107] text-[10px]"></i> ${rating}
+                    <i class="fa-solid fa-star text-[10px]" style="color:#e50000"></i> ${rating}
                 </div>
             </div>
             <div class="p-4 flex flex-col gap-3">

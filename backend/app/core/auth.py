@@ -11,10 +11,12 @@ def verify_supabase_token(token: str) -> dict:
             algorithms=["HS256"],
             audience="authenticated",
         )
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as e:
+        print("JWT EXPIRED:", e)
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.InvalidTokenError as e:
+        print("JWT ERROR:", e)
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
     if "email_confirmed_at" not in payload:
         raise HTTPException(status_code=403, detail="EMAIL_NOT_VERIFIED")

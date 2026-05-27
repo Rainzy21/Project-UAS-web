@@ -69,7 +69,7 @@
                         ${prefs.watching_with ? `<span class="glass-pill"><i class="fa-solid fa-users text-[10px]"></i> ${escapeHtml(prefs.watching_with)}</span>` : ''}
                     </div>
                     <div class="history-movies hidden mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
-                    <button class="expand-btn text-xs text-white/30 hover:text-[#ffc107] transition mt-2 flex items-center gap-1">
+                    <button class="expand-btn text-xs text-white/30 hover:text-[#e50000] transition mt-2 flex items-center gap-1">
                         <i class="fa-solid fa-chevron-down text-[10px]"></i> Show movies
                     </button>
                 `;

@@ -19,13 +19,14 @@
 
     const state = { step: 1, answers: {}, direction: 'forward' };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         const form = document.getElementById('rec-form');
         if (!form) return;
 
-        // Auth guard
-        if (window.Auth && !window.Auth.isLoggedIn()) {
-            window.location.href = '/?auth=required';
+        // Auth guard — tunggu session async
+        const session = await (window.Auth ? window.Auth.getSession() : Promise.resolve(null));
+        if (!session) {
+            window.location.href = 'index.html?auth=required';
             return;
         }
 
@@ -116,7 +117,8 @@
             e.preventDefault();
             hideError();
 
-            if (!window.Auth || !window.Auth.isLoggedIn()) {
+            const currentSession = await (window.Auth ? window.Auth.getSession() : Promise.resolve(null));
+            if (!currentSession) {
                 showError('Please sign in to get AI recommendations.');
                 window.Auth && window.Auth.showModal('login');
                 return;

@@ -1,147 +1,119 @@
 /**
- * auth.js — Authentication State & Modal Controller
+ * auth.js — Supabase Auth Controller
  *
- * Manages JWT tokens in localStorage, provides login/register/logout,
- * and controls the glassmorphism auth modal states.
+ * Wraps Supabase JS client untuk login/register/logout,
+ * dan mengontrol glassmorphism auth modal states.
+ *
+ * Requires: supabase CDN script loaded BEFORE this file.
  */
 (function (window) {
-    const KEYS = {
-        access:  'app_access_token',
-        refresh: 'app_refresh_token',
-        user:    'app_user',
-    };
 
-    let _refreshPromise = null;
-
-    // ── Token helpers ──────────────────────────────────────────
-    function getAccessToken() {
-        return localStorage.getItem(KEYS.access);
-    }
-
-    function getRefreshToken() {
-        return localStorage.getItem(KEYS.refresh);
-    }
-
-    function getUser() {
-        try { return JSON.parse(localStorage.getItem(KEYS.user)); }
-        catch { return null; }
-    }
-
-    function isLoggedIn() {
-        return !!getAccessToken();
-    }
-
-    function isEmailVerified() {
-        const u = getUser();
-        return u && u.email_verified === true;
-    }
-
-    function saveTokens({ access_token, refresh_token, user }) {
-        if (access_token) localStorage.setItem(KEYS.access, access_token);
-        if (refresh_token) localStorage.setItem(KEYS.refresh, refresh_token);
-        if (user) localStorage.setItem(KEYS.user, JSON.stringify(user));
-    }
-
-    function clearTokens() {
-        localStorage.removeItem(KEYS.access);
-        localStorage.removeItem(KEYS.refresh);
-        localStorage.removeItem(KEYS.user);
-    }
-
-    // ── Refresh — singleton pattern ────────────────────────────
-    async function refreshTokens() {
-        if (_refreshPromise) return _refreshPromise;
-        _refreshPromise = _doRefresh().finally(() => { _refreshPromise = null; });
-        return _refreshPromise;
-    }
-
-    async function _doRefresh() {
-        const rt = getRefreshToken();
-        if (!rt) return false;
-        try {
-            const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'http://localhost:8000';
-            const res = await fetch(API_BASE + '/api/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh_token: rt }),
-            });
-            if (!res.ok) {
-                clearTokens();
-                return false;
-            }
-            const data = await res.json();
-            saveTokens(data);
-            return true;
-        } catch {
-            clearTokens();
-            return false;
+    // ── Supabase client (sudah diinit di HTML via APP_CONFIG) ──
+    function getClient() {
+        if (window._supabaseClient) return window._supabaseClient;
+        const cfg = window.APP_CONFIG;
+        if (!cfg || !cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) {
+            console.error('[auth.js] APP_CONFIG.SUPABASE_URL / SUPABASE_ANON_KEY belum diset!');
+            return null;
         }
+        window._supabaseClient = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+        return window._supabaseClient;
+    }
+
+    // ── Session helpers ────────────────────────────────────────
+    async function getSession() {
+        const sb = getClient();
+        if (!sb) return null;
+        const { data: { session } } = await sb.auth.getSession();
+        return session;
+    }
+
+    async function getUser() {
+        const session = await getSession();
+        return session ? session.user : null;
+    }
+
+    async function isLoggedIn() {
+        const session = await getSession();
+        return !!session;
+    }
+
+    async function isEmailVerified() {
+        const user = await getUser();
+        return !!(user && user.email_confirmed_at);
+    }
+
+    function getAccessToken() {
+        // Synchronous fallback — reads cached token
+        try {
+            const cfg = window.APP_CONFIG;
+            const key = `sb-${new URL(cfg.SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+            const raw = localStorage.getItem(key);
+            if (raw) return JSON.parse(raw).access_token || null;
+        } catch { /* ignore */ }
+        return null;
     }
 
     // ── Auth actions ───────────────────────────────────────────
     async function login(email, password) {
-        const data = await window.Api.post('/api/auth/login', { email, password });
-        if (data) {
-            saveTokens(data);
-            updateNavState();
-            hideModal();
-            if (window.showToast) window.showToast('Welcome back!', 'success');
-        }
+        const sb = getClient();
+        if (!sb) throw new Error('Supabase not initialised');
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(error.message);
+        updateNavState();
+        hideModal();
+        if (window.showToast) window.showToast('Welcome back!', 'success');
         return data;
     }
 
-    async function register(name, email, password) {
-        const data = await window.Api.post('/api/auth/register', { name, email, password });
-        if (data) {
-            saveTokens(data);
-            updateNavState();
-            hideModal();
-            if (window.showToast) window.showToast('Account created! Please verify your email.', 'success');
-        }
+    async function register(email, password, name) {
+        const sb = getClient();
+        if (!sb) throw new Error('Supabase not initialised');
+        const { data, error } = await sb.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: name, name } }
+        });
+        if (error) throw new Error(error.message);
+        updateNavState();
+        hideModal();
+        if (window.showToast) window.showToast('Account created! Check your email to verify.', 'success');
         return data;
     }
 
     async function logout() {
-        try {
-            await window.Api.post('/api/auth/logout', { refresh_token: getRefreshToken() });
-        } catch { /* ignore */ }
-        clearTokens();
+        const sb = getClient();
+        if (sb) await sb.auth.signOut();
         updateNavState();
         if (window.showToast) window.showToast('You have been logged out.', 'info');
         window.location.href = '/';
     }
 
     async function forgotPassword(email) {
-        return window.Api.post('/api/auth/forgot-password', { email });
+        const sb = getClient();
+        if (!sb) throw new Error('Supabase not initialised');
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password.html`
+        });
+        if (error) throw new Error(error.message);
     }
 
-    async function resetPassword(token, newPassword) {
-        return window.Api.post('/api/auth/reset-password', { token, new_password: newPassword });
+    async function resendVerification(email) {
+        const sb = getClient();
+        if (!sb) throw new Error('Supabase not initialised');
+        const { error } = await sb.auth.resend({ type: 'signup', email });
+        if (error) throw new Error(error.message);
     }
 
-    async function resendVerification() {
-        return window.Api.post('/api/auth/resend-verification');
-    }
-
-    async function verifyEmail(token) {
-        return window.Api.post('/api/auth/verify-email', { token });
-    }
-
-    // ── Modal controller ──────────────────────────────────────
+    // ── Modal controller ───────────────────────────────────────
     function showModal(state = 'login') {
         const overlay = document.getElementById('auth-modal-overlay');
         if (!overlay) return;
         overlay.classList.add('active');
         overlay.classList.remove('hidden');
-
-        // Hide all panels, show requested one
-        overlay.querySelectorAll('[data-auth-panel]').forEach(p => {
-            p.classList.add('hidden');
-        });
+        overlay.querySelectorAll('[data-auth-panel]').forEach(p => p.classList.add('hidden'));
         const target = overlay.querySelector(`[data-auth-panel="${state}"]`);
         if (target) target.classList.remove('hidden');
-
-        // Clear form errors
         overlay.querySelectorAll('.auth-error').forEach(e => { e.textContent = ''; e.classList.add('hidden'); });
     }
 
@@ -152,12 +124,11 @@
         setTimeout(() => overlay.classList.add('hidden'), 300);
     }
 
-    // ── Nav state helper ───────────────────────────────────────
     function updateNavState() {
         if (window.Nav && window.Nav.update) window.Nav.update();
     }
 
-    // ── Bind modal forms on DOMContentLoaded ──────────────────
+    // ── Form bindings ──────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
         // Login form
         const loginForm = document.getElementById('auth-login-form');
@@ -168,13 +139,14 @@
                 errEl && errEl.classList.add('hidden');
                 const email = loginForm.querySelector('[name="email"]').value.trim();
                 const password = loginForm.querySelector('[name="password"]').value;
+                const btn = loginForm.querySelector('[type="submit"]');
+                btn && (btn.disabled = true);
                 try {
                     await login(email, password);
                 } catch (err) {
-                    if (errEl) {
-                        errEl.textContent = err.message || 'Login failed';
-                        errEl.classList.remove('hidden');
-                    }
+                    if (errEl) { errEl.textContent = err.message || 'Login failed'; errEl.classList.remove('hidden'); }
+                } finally {
+                    btn && (btn.disabled = false);
                 }
             });
         }
@@ -194,13 +166,14 @@
                     if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.classList.remove('hidden'); }
                     return;
                 }
+                const btn = signupForm.querySelector('[type="submit"]');
+                btn && (btn.disabled = true);
                 try {
-                    await register(name, email, pw);
+                    await register(email, pw, name);
                 } catch (err) {
-                    if (errEl) {
-                        errEl.textContent = err.message || 'Registration failed';
-                        errEl.classList.remove('hidden');
-                    }
+                    if (errEl) { errEl.textContent = err.message || 'Registration failed'; errEl.classList.remove('hidden'); }
+                } finally {
+                    btn && (btn.disabled = false);
                 }
             });
         }
@@ -213,46 +186,44 @@
                 const email = forgotForm.querySelector('[name="email"]').value.trim();
                 try {
                     await forgotPassword(email);
-                    showModal('forgot-sent');
-                } catch {
-                    showModal('forgot-sent'); // Show success regardless (security)
-                }
+                } catch { /* show success regardless */ }
+                showModal('forgot-sent');
             });
         }
 
-        // Modal close on overlay click
+        // Close on overlay click
         const overlay = document.getElementById('auth-modal-overlay');
         if (overlay) {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) hideModal();
-            });
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) hideModal(); });
         }
 
-        // Login trigger
+        // Login trigger (delegated)
         document.addEventListener('click', (e) => {
-            if (e.target.closest('#login-trigger')) {
-                showModal('login');
-            }
+            if (e.target.closest('#login-trigger')) showModal('login');
         });
+
+        // Listen for Supabase auth state changes
+        const sb = getClient();
+        if (sb) {
+            sb.auth.onAuthStateChange((_event, session) => {
+                updateNavState();
+            });
+        }
     });
 
-    // ── Export ──────────────────────────────────────────────────
+    // ── Export ─────────────────────────────────────────────────
     window.Auth = {
-        getAccessToken,
-        getRefreshToken,
+        getClient,
+        getSession,
         getUser,
         isLoggedIn,
         isEmailVerified,
-        saveTokens,
-        clearTokens,
-        refreshTokens,
+        getAccessToken,
         login,
         register,
         logout,
         forgotPassword,
-        resetPassword,
         resendVerification,
-        verifyEmail,
         showModal,
         hideModal,
     };

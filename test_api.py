@@ -15,7 +15,7 @@ import httpx
 import redis as redis_sync
 
 BASE = "http://localhost:8000"
-DB   = "/Users/voldys/project/Project-UAS-web/backend/database.db"
+DB   = "backend/database.db"
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 

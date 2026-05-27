@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Static/css/style.css">
+    <link rel="stylesheet" href="Static/css/landing.css">
 </head>
 <body class="min-h-screen relative flex flex-col">
 
@@ -15,18 +16,15 @@
     <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
         <div class="max-w-[1400px] mx-auto flex justify-between items-center">
             <a href="/" class="flex items-center gap-3 group">
-                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <div class="lp-logo-badge">SJ</div>
                 <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
             </a>
             <div class="flex items-center gap-6 text-sm">
-                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
-                    <i class="fa-solid fa-film text-xs"></i> All Movies
-                </a>
                 <a href="recommendations.html" class="text-white transition flex items-center gap-2">
                     <i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks
                 </a>
                 <div id="nav-guest" class="flex items-center gap-3">
-                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2">
+                    <button id="login-trigger" class="lp-btn lp-btn-primary text-xs px-4 py-2">
                         <i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up
                     </button>
                 </div>
@@ -51,12 +49,12 @@
     <main class="relative z-10 max-w-4xl mx-auto w-full px-6 pt-28 pb-24">
 
         <!-- Ambient glow -->
-        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none"></div>
-        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-red-900/5 rounded-full blur-[150px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-red-900/5 rounded-full blur-[120px] pointer-events-none"></div>
 
         <!-- Header -->
         <div class="flex items-center gap-3 mb-2">
-            <div class="section-accent-bar"></div>
+            <div class="lp-section-bar"></div>
             <h1 class="text-3xl md:text-4xl font-heading font-bold tracking-wide uppercase">AI Recommendations</h1>
         </div>
         <p class="text-white/40 text-sm mb-10 ml-7">
@@ -150,13 +148,13 @@
 
             <!-- Navigation -->
             <div class="flex items-center justify-between mt-10 pt-6 border-t border-white/5">
-                <button type="button" id="rec-back" class="glass-btn glass-btn-secondary px-5 py-2.5 text-sm" disabled>
+                <button type="button" id="rec-back" class="lp-btn lp-btn-secondary px-5 py-2.5 text-sm" disabled>
                     <i class="fa-solid fa-arrow-left mr-2 text-xs"></i> Back
                 </button>
-                <button type="button" id="rec-next" class="glass-btn glass-btn-primary px-6 py-2.5 text-sm" disabled>
+                <button type="button" id="rec-next" class="lp-btn lp-btn-primary px-6 py-2.5 text-sm" disabled>
                     Next <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                 </button>
-                <button type="submit" id="rec-submit" class="hidden glass-btn glass-btn-primary px-6 py-2.5 text-sm" disabled>
+                <button type="submit" id="rec-submit" class="hidden lp-btn lp-btn-primary px-6 py-2.5 text-sm" disabled>
                     <i class="fa-solid fa-wand-magic-sparkles mr-2 text-xs"></i> Get Recommendations
                 </button>
             </div>
@@ -173,7 +171,7 @@
         <section id="rec-results" class="hidden mt-4">
             <div class="flex justify-between items-end mb-6">
                 <div class="flex items-center gap-3">
-                    <div class="section-accent-bar"></div>
+                    <div class="lp-section-bar"></div>
                     <h2 class="text-2xl font-heading font-bold tracking-wide uppercase">Your Picks</h2>
                 </div>
                 <button type="button" id="rec-restart" class="text-sm text-white/30 hover:text-white transition flex items-center gap-2">
@@ -200,7 +198,7 @@
         <div class="glass-modal">
             <div class="p-8">
                 <div class="flex justify-center mb-6">
-                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                    <div class="lp-logo-badge text-2xl rounded-lg px-3 py-1">SJ</div>
                 </div>
                 <div data-auth-panel="login">
                     <div class="text-center mb-6">
@@ -211,7 +209,7 @@
                     <form id="auth-login-form" class="space-y-5">
                         <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
                         <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="••••••••" required></div>
-                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
+                        <button type="submit" class="w-full lp-btn lp-btn-primary py-3 text-sm">Login</button>
                     </form>
                     <hr class="glass-divider">
                     <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
@@ -227,7 +225,7 @@
                         <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
                         <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="Create a password" required></div>
                         <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label><input type="password" name="confirm_password" class="glass-input" placeholder="Repeat password" required></div>
-                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
+                        <button type="submit" class="w-full lp-btn lp-btn-primary py-3 text-sm">Create Account</button>
                     </form>
                     <hr class="glass-divider">
                     <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
@@ -237,17 +235,20 @@
         </div>
     </div>
 
+    <!-- Supabase JS client (must load FIRST) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         window.APP_CONFIG = {
             API_BASE: 'http://localhost:8000',
-            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905',
+            SUPABASE_URL: 'https://nwvvwghvdnbrltektuno.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dnZ3Z2h2ZG5icmx0ZWt0dW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjQ2MDMsImV4cCI6MjA5NTIwMDYwM30.Brl67HzxcSoYrs9AtY8kVtofLLa0k9bJAdsmpIpb7Ns'
         };
     </script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>
     <script src="Static/js/nav.js"></script>
-    <script src="Static/js/movie.js"></script>
     <script src="Static/js/recommendations.js"></script>
 </body>
 </html>

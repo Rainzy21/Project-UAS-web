@@ -13,7 +13,7 @@ import sys
 import httpx
 
 BASE = "http://localhost:8000"
-DB   = "/Users/voldys/project/Project-UAS-web/backend/database.db"
+DB   = "backend/database.db"
 
 # ── ANSI colours ─────────────────────────────────────────────────────────────
 R  = "\033[0m"       # reset

@@ -1,9 +1,29 @@
+# ── Core Framework ────────────────────────────────────────
 fastapi
 uvicorn[standard]
-httpx
+
+# ── HTTP Client ───────────────────────────────────────────
+# Pin ke <0.28 karena supabase==2.9.1 memerlukan httpx<0.28
+httpx>=0.26,<0.28
+
+# ── AI Provider ──────────────────────────────────────────
 openai
-python-dotenv
+
+# ── Validation & Settings ────────────────────────────────
 pydantic
 pydantic-settings
+
+# ── Auth (Supabase JWT verification) ─────────────────────
 PyJWT
-supabase
+
+# ── Supabase client (admin operations) ──────────────────
+# Pin ke 2.9.1 — versi kompatibel Windows tanpa pyiceberg
+# (versi 2.30+ memerlukan pyiceberg yang butuh Microsoft C++ Build Tools)
+supabase==2.9.1
+
+# ── WebSocket (supabase realtime dependency) ─────────────
+# 13.x+ punya asyncio submodule; <16 untuk compat realtime 2.30.0
+websockets>=13.0,<16.0
+
+# ── Env ──────────────────────────────────────────────────
+python-dotenv

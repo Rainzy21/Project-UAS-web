@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Static/css/style.css">
+    <link rel="stylesheet" href="Static/css/landing.css">
 </head>
 <body class="min-h-screen relative flex flex-col">
 
@@ -15,11 +16,10 @@
     <nav class="glass-nav fixed w-full z-30 px-6 md:px-10 py-4">
         <div class="max-w-[1400px] mx-auto flex justify-between items-center">
             <a href="/" class="flex items-center gap-3 group">
-                <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold px-2.5 py-1 rounded-lg text-sm shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">SJ</div>
+                <div class="lp-logo-badge">SJ</div>
                 <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
             </a>
             <div class="flex items-center gap-6 text-sm">
-                <a href="movies.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-film text-xs"></i> All Movies</a>
                 <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks</a>
                 <div id="nav-guest" class="flex items-center gap-3">
                     <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up</button>
@@ -47,13 +47,13 @@
         <div class="absolute inset-0 bg-overlay-full"></div>
 
         <!-- Ambient glow -->
-        <div class="absolute bottom-0 left-1/4 w-[400px] h-[300px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-1/4 w-[400px] h-[300px] bg-red-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div class="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-10 pb-12">
-            <div class="flex flex-col md:flex-row gap-8 items-end">
+        <div class="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-28 pb-12">
+            <div class="flex flex-col md:flex-row gap-8 items-start">
                 <!-- Poster -->
-                <div id="detail-poster-wrap" class="w-48 md:w-56 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/10 hidden">
-                    <img id="detail-poster" src="" alt="" class="w-full aspect-[2/3] object-cover">
+                <div id="detail-poster-wrap" class="w-44 md:w-52 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/10 hidden" style="box-shadow: 0 8px 40px rgba(229,0,0,0.2);">
+                    <img id="detail-poster" src="" alt="" class="w-full h-full object-cover" style="aspect-ratio:2/3;">
                 </div>
 
                 <!-- Info -->
@@ -63,10 +63,10 @@
                     <div id="detail-meta" class="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-6"></div>
                     <p id="detail-overview" class="text-white/50 text-sm leading-relaxed max-w-2xl mb-8"></p>
                     <div class="flex items-center gap-4">
-                        <button id="detail-save-btn" class="glass-btn glass-btn-primary py-3 px-6 text-sm">
+                        <button id="detail-save-btn" class="lp-btn lp-btn-primary py-3 px-6 text-sm">
                             <i class="fa-solid fa-plus"></i> Save to My List
                         </button>
-                        <a id="detail-trailer-btn" href="#" target="_blank" class="glass-btn glass-btn-secondary py-3 px-6 text-sm hidden">
+                        <a id="detail-trailer-btn" href="#" target="_blank" class="lp-btn lp-btn-secondary py-3 px-6 text-sm hidden">
                             <i class="fa-solid fa-play"></i> Watch Trailer
                         </a>
                     </div>
@@ -111,7 +111,7 @@
         <div class="glass-modal">
             <div class="p-8">
                 <div class="flex justify-center mb-6">
-                    <div class="bg-gradient-to-br from-[#ffc107] to-[#ff9800] text-black font-bold text-2xl rounded-lg px-3 py-1 shadow-lg shadow-amber-500/20">SJ</div>
+                    <div class="lp-logo-badge text-2xl rounded-lg px-3 py-1">SJ</div>
                 </div>
                 <div data-auth-panel="login">
                     <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2><p class="text-sm text-white/40">Sign in to your account</p></div>
@@ -142,17 +142,20 @@
         </div>
     </div>
 
+    <!-- Supabase JS client (must load FIRST) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         window.APP_CONFIG = {
             API_BASE: 'http://localhost:8000',
-            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905'
+            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905',
+            SUPABASE_URL: 'https://nwvvwghvdnbrltektuno.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dnZ3Z2h2ZG5icmx0ZWt0dW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjQ2MDMsImV4cCI6MjA5NTIwMDYwM30.Brl67HzxcSoYrs9AtY8kVtofLLa0k9bJAdsmpIpb7Ns'
         };
     </script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>
     <script src="Static/js/nav.js"></script>
-    <script src="Static/js/movie.js"></script>
 
     <script>
     (async function() {
@@ -202,7 +205,7 @@
 
             metaEl.innerHTML = `
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-star text-[#ffc107]"></i>
+                    <i class="fa-solid fa-star" style="color: var(--lp-red);"></i>
                     <span class="font-bold text-white text-base">${rating}</span><span class="text-xs">/10</span>
                 </div>
                 ${year ? `<span>${year}</span>` : ''}
@@ -264,17 +267,49 @@
                 infoList.appendChild(row);
             });
 
-            // Save button
+            // Save button — RPC (preferred) or direct insert (fallback)
             const saveBtn = document.getElementById('detail-save-btn');
-            saveBtn.addEventListener('click', () => {
-                window.MovieUI.handleSave(tmdbId, saveBtn, {
-                    title: movie.title,
-                    poster_path: movie.poster_path,
-                    vote_average: movie.vote_average,
-                    release_date: movie.release_date,
-                    genres: (movie.genres || []).map(g => g.name),
-                });
+            saveBtn.addEventListener('click', async () => {
+                const session = window.Auth ? await window.Auth.getSession() : null;
+                if (!session) { if (window.Auth) window.Auth.showModal('login'); return; }
+                try {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving\u2026';
+                    const sb = window.Auth.getClient();
+                    const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
+                    const yr = (movie.release_date || '').slice(0, 4);
+
+                    // Try RPC first
+                    const { error: rpcErr } = await sb.rpc('save_movie_to_wishlist', {
+                        p_tmdb_id: Number(tmdbId), p_title: movie.title,
+                        p_poster_url: posterUrl, p_rating: movie.vote_average || 0, p_year: yr,
+                    });
+
+                    if (rpcErr) {
+                        if (rpcErr.code === 'PGRST202' || rpcErr.message.includes('Could not find')) {
+                            // Fallback: direct upsert + insert
+                            try { await sb.from('movies').upsert(
+                                { tmdb_id: Number(tmdbId), title: movie.title, poster_url: posterUrl, rating: movie.vote_average || 0, year: yr },
+                                { onConflict: 'tmdb_id', ignoreDuplicates: true }
+                            ); } catch(_) {}
+                            const { error: ins } = await sb.from('saved_movies')
+                                .insert({ tmdb_id: Number(tmdbId), user_id: session.user.id });
+                            if (ins && ins.code !== '23505') throw ins;
+                        } else { throw rpcErr; }
+                    }
+
+                    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+                    saveBtn.style.background = 'rgba(229,0,0,0.25)';
+                    saveBtn.style.borderColor = 'rgba(229,0,0,0.5)';
+                    if (window.showToast) window.showToast('\u201c' + movie.title + '\u201d saved to My List!', 'success');
+                } catch (e) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save to My List';
+                    if (window.showToast) window.showToast('Failed: ' + e.message, 'error');
+                }
             });
+
+
 
         } catch (err) {
             console.error('Failed to load movie detail', err);
