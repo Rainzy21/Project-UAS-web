@@ -45,16 +45,39 @@
                 if (error) throw new Error(error.message);
 
                 // Flatten data: gabungkan kolom movies ke level atas
-                allMovies = (data || []).map(row => ({
-                    saved_id: row.id,
-                    tmdb_id: row.tmdb_id,
-                    note: row.note,
-                    tag: row.tag,
-                    saved_at: row.saved_at,
-                    title: row.movies?.title || 'Untitled',
-                    poster_url: row.movies?.poster_url || null,
-                    rating: row.movies?.rating || 0,
-                    year: row.movies?.year || '',
+                allMovies = await Promise.all((data || []).map(async row => {
+                    let title = row.movies?.title;
+                    let poster_url = row.movies?.poster_url;
+                    let rating = row.movies?.rating || 0;
+                    let year = row.movies?.year || '';
+
+                    // Jika data dari database tidak lengkap (contoh: karena error insert sebelumnya),
+                    // tarik data langsung dari TMDB API sebagai fallback.
+                    if (!title || title === 'Untitled' || !poster_url) {
+                        try {
+                            const tmdbData = await window.AppAPI.fetchMovieDetail(row.tmdb_id);
+                            title = tmdbData.title || title;
+                            if (tmdbData.poster_path) {
+                                poster_url = window.AppAPI.posterUrl(tmdbData.poster_path);
+                            }
+                            rating = tmdbData.vote_average || rating;
+                            year = tmdbData.release_date ? tmdbData.release_date.slice(0, 4) : year;
+                        } catch (e) {
+                            console.error('Gagal mengambil data dari TMDB untuk id:', row.tmdb_id, e);
+                        }
+                    }
+
+                    return {
+                        saved_id: row.id,
+                        tmdb_id: row.tmdb_id,
+                        note: row.note,
+                        tag: row.tag,
+                        saved_at: row.saved_at,
+                        title: title || 'Untitled',
+                        poster_url: poster_url || null,
+                        rating: rating,
+                        year: year,
+                    };
                 }));
 
                 renderList(allMovies);

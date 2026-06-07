@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.save_movie_to_wishlist(
     p_title     TEXT,
     p_poster_url TEXT,
     p_rating    FLOAT,
-    p_year      TEXT
+    p_year      INTEGER
 )
 RETURNS void
 LANGUAGE plpgsql

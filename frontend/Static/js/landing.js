@@ -399,7 +399,8 @@
         const title   = btn.dataset.title   || 'Unknown';
         const poster  = btn.dataset.poster  || '';
         const rating  = parseFloat(btn.dataset.rating) || 0;
-        const yr      = btn.dataset.year    || '';
+        const yrStr   = btn.dataset.year    || '';
+        const yr      = yrStr ? parseInt(yrStr, 10) : null;
         const sb      = window.Auth.getClient();
 
         // Already saved → remove

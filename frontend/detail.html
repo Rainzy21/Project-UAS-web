@@ -277,7 +277,8 @@
                     saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving\u2026';
                     const sb = window.Auth.getClient();
                     const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
-                    const yr = (movie.release_date || '').slice(0, 4);
+                    const yrStr = (movie.release_date || '').slice(0, 4);
+                    const yr = yrStr ? parseInt(yrStr, 10) : null;
 
                     // Try RPC first
                     const { error: rpcErr } = await sb.rpc('save_movie_to_wishlist', {
@@ -288,10 +289,16 @@
                     if (rpcErr) {
                         if (rpcErr.code === 'PGRST202' || rpcErr.message.includes('Could not find')) {
                             // Fallback: direct upsert + insert
-                            try { await sb.from('movies').upsert(
+                            const { error: upsertErr } = await sb.from('movies').upsert(
                                 { tmdb_id: Number(tmdbId), title: movie.title, poster_url: posterUrl, rating: movie.vote_average || 0, year: yr },
                                 { onConflict: 'tmdb_id', ignoreDuplicates: true }
-                            ); } catch(_) {}
+                            ); 
+                            
+                            if (upsertErr) {
+                                console.error("Movies upsert error:", upsertErr);
+                                throw new Error("Could not insert movie into database. Please run supabase_fix_wishlist.sql in your Supabase SQL editor to enable RLS or create the RPC function.");
+                            }
+                            
                             const { error: ins } = await sb.from('saved_movies')
                                 .insert({ tmdb_id: Number(tmdbId), user_id: session.user.id });
                             if (ins && ins.code !== '23505') throw ins;
