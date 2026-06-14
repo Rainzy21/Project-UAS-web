@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     TMDB_CACHE_TTL: int = 3600
 
     DEEPSEEK_API_KEY: str = ""
+    GEMINI_API_KEY: str = "AIzaSyDefault-ReplaceWithRealKey"
     AI_CANDIDATE_COUNT: int = 15
 
     FRONTEND_URL: str = "http://localhost:5500"

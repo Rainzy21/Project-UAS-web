@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers import movies, recommendations, chat
+from app.routers import movies, recommendations, chat, users
 
 app = FastAPI(title="SJ MovieReview API")
 
@@ -15,8 +15,8 @@ app.add_middleware(
 
 app.include_router(movies.router, prefix="/api/movies")
 app.include_router(recommendations.router, prefix="/api/recommendations")
-# Chat router tetap dipertahankan karena frontend index.html masih menggunakan chat.js
 app.include_router(chat.router, prefix="/api")
+app.include_router(users.router, prefix="/api/users")
 
 
 @app.get("/")

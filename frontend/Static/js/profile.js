@@ -2,31 +2,78 @@
  * profile.js — User Profile Page
  *
  * Edit name, change password, delete account.
+ * Reads profile from /api/users/me (backend), falls back to Supabase session.
  */
 (function () {
     document.addEventListener('DOMContentLoaded', async () => {
         const profileCard = document.getElementById('profile-card');
         if (!profileCard) return;
 
-        // Auth guard
-        if (!window.Auth || !window.Auth.isLoggedIn()) {
+        // ── Auth guard (async-safe) ───────────────────────────
+        let session = null;
+        try {
+            session = await window.Auth.getSession();
+        } catch (e) { /* ignore */ }
+
+        if (!session) {
             window.location.href = '/?auth=required';
             return;
         }
 
         // ── Load user profile ────────────────────────────────
-        try {
-            const user = await window.Api.get('/api/users/me');
-            document.getElementById('profile-name').textContent = user.name || 'User';
-            document.getElementById('profile-email').textContent = user.email || '';
-            document.getElementById('profile-since').textContent = user.created_at
-                ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        async function loadProfile() {
+            try {
+                // Try backend API first
+                const user = await window.Api.get('/api/users/me');
+                renderProfile({
+                    name: user.name,
+                    email: user.email,
+                    email_verified: user.email_verified,
+                    created_at: user.created_at,
+                });
+            } catch (err) {
+                console.warn('[profile] API /api/users/me failed:', err.status, err.message);
+                // Fallback: read directly from Supabase session
+                try {
+                    const sbUser = session.user;
+                    const meta = sbUser.user_metadata || {};
+                    const name = meta.full_name || meta.name || sbUser.email.split('@')[0];
+                    renderProfile({
+                        name: name,
+                        email: sbUser.email,
+                        email_verified: !!sbUser.email_confirmed_at,
+                        created_at: sbUser.created_at,
+                    });
+                    // Show subtle warning if backend unavailable (not error-level)
+                    if (err.status >= 500) {
+                        console.warn('[profile] Using local session data (backend unavailable)');
+                    }
+                } catch (fallbackErr) {
+                    console.error('[profile] Fallback failed:', fallbackErr);
+                    if (window.showToast) window.showToast('Failed to load profile.', 'error');
+                }
+            }
+        }
+
+        function renderProfile({ name, email, email_verified, created_at }) {
+            const nameEl = document.getElementById('profile-name');
+            const emailEl = document.getElementById('profile-email');
+            const sinceEl = document.getElementById('profile-since');
+            const badge = document.getElementById('profile-verified-badge');
+            const avatarEl = document.getElementById('profile-avatar-letter');
+
+            if (nameEl) nameEl.textContent = name || 'User';
+            if (emailEl) emailEl.textContent = email || '';
+            if (sinceEl) sinceEl.textContent = created_at
+                ? new Date(created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
                 : '';
 
+            // Avatar letter
+            if (avatarEl) avatarEl.textContent = (name || email || 'U')[0].toUpperCase();
+
             // Email verification badge
-            const badge = document.getElementById('profile-verified-badge');
             if (badge) {
-                if (user.email_verified) {
+                if (email_verified) {
                     badge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> Verified';
                     badge.className = 'text-xs text-emerald-400 flex items-center gap-1';
                 } else {
@@ -34,9 +81,9 @@
                     badge.className = 'text-xs text-amber-400 flex items-center gap-1';
                 }
             }
-        } catch (err) {
-            if (window.showToast) window.showToast('Failed to load profile.', 'error');
         }
+
+        await loadProfile();
 
         // ── Edit name ────────────────────────────────────────
         const editNameBtn = document.getElementById('edit-name-btn');
@@ -71,12 +118,8 @@
                 try {
                     await window.Api.patch('/api/users/me', { name: newName });
                     nameDisplay.textContent = newName;
-                    // Update local user
-                    const user = window.Auth.getUser();
-                    if (user) {
-                        user.name = newName;
-                        window.Auth.saveTokens({ user });
-                    }
+                    const avatarEl = document.getElementById('profile-avatar-letter');
+                    if (avatarEl) avatarEl.textContent = newName[0].toUpperCase();
                     nameEditGroup.classList.add('hidden');
                     nameDisplay.classList.remove('hidden');
                     editNameBtn.classList.remove('hidden');
@@ -103,7 +146,15 @@
                     errEl.classList.remove('hidden');
                     return;
                 }
+                if (newPw.length < 6) {
+                    errEl.textContent = 'Password must be at least 6 characters.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
                 errEl.classList.add('hidden');
+
+                const btn = pwForm.querySelector('[type="submit"]');
+                if (btn) btn.disabled = true;
 
                 try {
                     await window.Api.patch('/api/users/me/password', {
@@ -115,6 +166,8 @@
                 } catch (err) {
                     errEl.textContent = err.message || 'Failed to change password.';
                     errEl.classList.remove('hidden');
+                } finally {
+                    if (btn) btn.disabled = false;
                 }
             });
         }
@@ -139,7 +192,7 @@
                 if (!pw) return;
                 try {
                     await window.Api.delete('/api/users/me', { body: JSON.stringify({ current_password: pw }) });
-                    window.Auth.clearTokens();
+                    window.Auth.logout && window.Auth.logout();
                     window.location.href = '/';
                 } catch (err) {
                     if (window.showToast) window.showToast(err.message || 'Failed to delete account.', 'error');

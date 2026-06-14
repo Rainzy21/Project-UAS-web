@@ -17,7 +17,7 @@
         <div class="max-w-[1400px] mx-auto flex justify-between items-center">
             <a href="/" class="flex items-center gap-3 group">
                 <div class="lp-logo-badge">SJ</div>
-                <span class="text-white font-semibold tracking-wide text-sm">MovieReview</span>
+                <span class="text-white font-semibold tracking-wide text-sm">MovieRecommendation</span>
             </a>
 
             <div class="flex items-center gap-6 text-sm">
@@ -181,99 +181,17 @@
         <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="lp-logo-badge text-sm px-2 py-0.5">SJ</div>
-                <span class="text-white/40 text-sm">MovieReview</span>
+                <span class="text-white/40 text-sm">MovieRecommendation</span>
             </div>
             <nav class="flex items-center gap-8 text-sm">
                 <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
                 <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
                 <a href="#" class="text-white/30 hover:text-white/60 transition">Help Center</a>
             </nav>
-            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview. Movie data by TMDB.</p>
+            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieRecommendation. Movie data by TMDB.</p>
         </div>
     </footer>
 
-    <!-- ═══ Chat Bot ════════════════════════════════════════════ -->
-    <div class="fixed bottom-6 right-6 z-40" id="chat-fab-group">
-        <button id="chat-toggle-btn" title="Chat dengan SJ MovieBot"
-            class="relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-            style="background: linear-gradient(135deg, #e50000, #8b0000); box-shadow: 0 0 30px rgba(229,0,0,0.4), 0 8px 24px rgba(0,0,0,0.4);">
-            <span class="absolute inset-0 rounded-full animate-ping opacity-30" style="background: rgba(229,0,0,0.5);"></span>
-            <i class="fa-solid fa-comment text-xl text-white relative z-10" id="chat-toggle-icon"></i>
-        </button>
-    </div>
-
-    <!-- Chat Panel -->
-    <div id="chat-panel" class="fixed bottom-24 right-6 z-50 hidden" style="width: 380px; max-width: calc(100vw - 2rem);">
-        <div style="
-            background: rgba(10, 0, 0, 0.95);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(229,0,0,0.15);
-            border-radius: 20px;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 60px rgba(229,0,0,0.08);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        ">
-            <!-- Gradient accent line -->
-            <div style="height: 2px; background: linear-gradient(90deg, #8b0000, #e50000, #ff4444); flex-shrink: 0;"></div>
-
-            <!-- Header -->
-            <div class="flex items-center justify-between px-5 py-4" style="border-bottom: 1px solid rgba(229,0,0,0.1);">
-                <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #8b0000, #e50000); box-shadow: 0 0 20px rgba(229,0,0,0.3);">
-                            <i class="fa-solid fa-robot text-white text-sm"></i>
-                        </div>
-                        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 animate-pulse" style="border-color: rgba(10,0,0,0.95);"></span>
-                    </div>
-                    <div>
-                        <h4 class="text-white font-semibold text-sm leading-none mb-0.5">SJ MovieBot</h4>
-                        <p class="text-emerald-400 text-[11px]">● Online · Powered by DeepSeek</p>
-                    </div>
-                </div>
-                <button id="chat-close-btn" class="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
-            </div>
-
-            <!-- Messages -->
-            <div id="chat-messages" class="overflow-y-auto px-4 py-4 space-y-3 no-scrollbar" style="min-height: 260px; max-height: 300px;"></div>
-
-            <!-- Suggestion Chips -->
-            <div id="chat-suggestions" class="px-4 pb-3">
-                <p class="text-[10px] text-white/25 uppercase tracking-widest font-semibold mb-2">Coba tanyakan</p>
-                <div class="flex flex-wrap gap-1.5">
-                    <button class="chat-suggestion text-[11px] px-3 py-1.5 rounded-full transition-all hover:opacity-80"
-                        style="background: rgba(229,0,0,0.08); border: 1px solid rgba(229,0,0,0.2); color: rgba(255,255,255,0.6);">
-                        🎬 Film trending minggu ini?
-                    </button>
-                    <button class="chat-suggestion text-[11px] px-3 py-1.5 rounded-full transition-all hover:opacity-80"
-                        style="background: rgba(229,0,0,0.08); border: 1px solid rgba(229,0,0,0.2); color: rgba(255,255,255,0.6);">
-                        🍿 Rekomendasi film horror
-                    </button>
-                    <button class="chat-suggestion text-[11px] px-3 py-1.5 rounded-full transition-all hover:opacity-80"
-                        style="background: rgba(229,0,0,0.08); border: 1px solid rgba(229,0,0,0.2); color: rgba(255,255,255,0.6);">
-                        ⭐ Hidden gems 2023
-                    </button>
-                </div>
-            </div>
-
-            <!-- Input -->
-            <div class="px-4 py-3" style="border-top: 1px solid rgba(229,0,0,0.1);">
-                <form id="chat-form" class="flex items-center gap-2">
-                    <input type="text" id="chat-input" class="glass-input flex-1 text-sm py-2.5"
-                        placeholder="Tanya tentang film..." autocomplete="off" maxlength="500">
-                    <button type="submit" id="chat-send-btn"
-                        class="w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
-                        style="background: linear-gradient(135deg, #8b0000, #e50000); box-shadow: 0 0 15px rgba(229,0,0,0.3);" disabled>
-                        <i class="fa-solid fa-paper-plane text-white text-sm"></i>
-                    </button>
-                </form>
-                <p class="text-[9px] text-white/20 text-center mt-2">AI dapat membuat kesalahan &bull; Verifikasi info penting</p>
-            </div>
-        </div>
-    </div>
 
     <!-- ═══ Auth Modal ═══════════════════════════════════════════ -->
     <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
@@ -407,7 +325,6 @@
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>
     <script src="Static/js/nav.js"></script>
-    <script src="Static/js/chat.js"></script>
     <script src="Static/js/landing.js"></script>
 </body>
 </html>

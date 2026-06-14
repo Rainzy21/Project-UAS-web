@@ -42,7 +42,11 @@
 
         if (!res.ok) {
             const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
-            const error = new Error(err.detail || err.message || 'Request failed');
+            let msg = err.detail || err.message || 'Request failed';
+            if (typeof msg === 'object') {
+                msg = msg.message || JSON.stringify(msg);
+            }
+            const error = new Error(msg);
             error.status = res.status;
             error.data = err;
             throw error;

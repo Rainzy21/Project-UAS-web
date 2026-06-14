@@ -152,7 +152,24 @@
                 grid.innerHTML = '<p class="col-span-full text-center text-white/40 py-12">No matches found. Try different filters.</p>';
             } else {
                 movies.forEach(m => {
-                    const card = window.MovieUI.buildCard(m, { showSave: true });
+                    const card = document.createElement('div');
+                    card.className = 'lp-movie-card';
+                    card.style.cursor = 'pointer';
+                    card.title = m.title || m.name || 'Unknown';
+                    card.addEventListener('click', () => { window.location.href = `detail.html?id=${m.tmdb_id}`; });
+
+                    const posterSrc = m.poster_url || '';
+                    card.innerHTML = `
+                        ${posterSrc ? `<img class="lp-card-poster" src="${posterSrc}" alt="${card.title}" loading="lazy">` : `<div class="lp-card-poster-placeholder" style="aspect-ratio:2/3;background:#1a0000;display:flex;align-items:center;justify-content:center;color:rgba(229,0,0,0.3);font-size:2rem;"><i class="fa-solid fa-film"></i></div>`}
+                        <div class="lp-card-info">
+                            <div class="lp-card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${card.title}</div>
+                            <div class="lp-card-rating">
+                                <i class="fa-solid fa-star lp-card-star" style="color:var(--accent);"></i>
+                                <span style="color:rgba(255,255,255,0.75);font-weight:600;margin-left:4px;">${m.rating ? m.rating.toFixed(1) : '–'}</span>
+                                <span style="margin-left:6px;opacity:0.5;">${m.year || ''}</span>
+                            </div>
+                        </div>
+                    `;
                     grid.appendChild(card);
                 });
             }

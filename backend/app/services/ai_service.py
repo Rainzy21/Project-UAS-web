@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-"""B31 — AI service using the DeepSeek API (OpenAI-compatible).
+"""B31 — AI service using Gemini (primary) with DeepSeek fallback.
 
-Builds the prompt entirely from B17 constants (no raw user strings injected).
+Provider priority:
+  1. Gemini    – primary (OpenAI-compatible endpoint, uses default key if needed)
+  2. DeepSeek  – fallback when DEEPSEEK_API_KEY is set and working
+
 Returns a list of dicts: [{"tmdb_id": int, "title": str, "year": int | None}]
-Raises HTTP 502/AI_ERROR on any failure.
-
-Accuracy upgrades:
-- DeepSeek JSON mode (response_format={"type": "json_object"}) for guaranteed valid JSON
-- System + user message split (recommended pattern for deepseek-chat)
-- Low temperature (0.3) for deterministic, factual TMDB IDs
-- Requests 15 candidates so we still have ≥10 after TMDB 404 / adult filtering
-- Year is requested as a cross-check field so callers can detect ID/title mismatches
-- "Any" era / language are passed through as truly optional, not as a hard filter
+Raises HTTP 502/AI_ERROR on total failure.
 """
 import json
+import logging
 import re
+import httpx
 
 from fastapi import HTTPException
 from openai import AsyncOpenAI
@@ -29,12 +26,20 @@ from app.constants import (
 )
 from app.core.config import settings
 
-_MODEL = "deepseek-chat"
+logger = logging.getLogger(__name__)
+
+_DEEPSEEK_MODEL = "deepseek-chat"
 _DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+_GEMINI_MODEL = "gemini-2.0-flash"
 _TEMPERATURE = 0.3     # low → factual / consistent TMDB IDs
 _MAX_TOKENS = 2048
 
-_CLIENT: AsyncOpenAI | None = None
+# Default Gemini API key fallback
+_DEFAULT_GEMINI_KEY = "AIzaSyDefault-ReplaceWithRealKey"
+
+_DEEPSEEK_CLIENT: AsyncOpenAI | None = None
+_GEMINI_CLIENT: AsyncOpenAI | None = None
 
 # Map era → (min_year, max_year | None) used to make the prompt unambiguous.
 _ERA_RANGES: dict[str, tuple[int, int | None]] = {
@@ -55,14 +60,66 @@ _LANGUAGE_ISO: dict[str, str] = {
 }
 
 
-def _get_client() -> AsyncOpenAI:
-    global _CLIENT
-    if _CLIENT is None:
-        _CLIENT = AsyncOpenAI(
+def _get_deepseek_client() -> AsyncOpenAI | None:
+    """Return DeepSeek client if API key is available, else None."""
+    global _DEEPSEEK_CLIENT
+    if not settings.DEEPSEEK_API_KEY:
+        return None
+        
+    if _DEEPSEEK_CLIENT is None:
+        base_url = _DEEPSEEK_BASE_URL
+        headers = {}
+        if settings.DEEPSEEK_API_KEY.startswith("sk-or-"):
+            base_url = "https://openrouter.ai/api/v1"
+            headers = {
+                "HTTP-Referer": settings.FRONTEND_URL,
+                "X-Title": "SJ MovieRecommendation",
+            }
+            
+        _DEEPSEEK_CLIENT = AsyncOpenAI(
             api_key=settings.DEEPSEEK_API_KEY,
-            base_url=_DEEPSEEK_BASE_URL,
+            base_url=base_url,
+            default_headers=headers if headers else None,
         )
-    return _CLIENT
+    return _DEEPSEEK_CLIENT
+
+
+async def _call_gemini_native(api_key: str, messages: list) -> str:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{_GEMINI_MODEL}:generateContent"
+    contents = []
+    system_instruction = None
+    for msg in messages:
+        if msg["role"] == "system":
+            system_instruction = {"parts": [{"text": msg["content"]}]}
+        elif msg["role"] == "user":
+            contents.append({"role": "user", "parts": [{"text": msg["content"]}]})
+        elif msg["role"] == "assistant":
+            contents.append({"role": "model", "parts": [{"text": msg["content"]}]})
+    
+    payload = {
+        "contents": contents,
+        "generationConfig": {
+            "temperature": _TEMPERATURE,
+            "responseMimeType": "application/json",
+        }
+    }
+    if system_instruction:
+        payload["systemInstruction"] = system_instruction
+
+    headers = {
+        "x-goog-api-key": api_key,
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, headers=headers, json=payload, timeout=60.0)
+    if resp.status_code != 200:
+        raise Exception(f"Gemini HTTP {resp.status_code}: {resp.text}")
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        raise Exception(f"Invalid Gemini format: {resp.text}")
 
 
 def _validate_preferences(preferences: dict) -> None:
@@ -227,8 +284,23 @@ def _normalise(raw: list) -> list[dict]:
     return out
 
 
+async def _call_ai(client: AsyncOpenAI, model: str, messages: list) -> str:
+    """Shared completion call with JSON mode for DeepSeek, plain for Gemini."""
+    kwargs: dict = {
+        "model": model,
+        "messages": messages,
+        "temperature": _TEMPERATURE,
+        "max_tokens": _MAX_TOKENS,
+    }
+    # Only DeepSeek supports json_object response_format reliably
+    if model == _DEEPSEEK_MODEL:
+        kwargs["response_format"] = {"type": "json_object"}
+    response = await client.chat.completions.create(**kwargs)
+    return response.choices[0].message.content or ""
+
+
 async def get_recommendations(preferences: dict) -> list[dict]:
-    """Call DeepSeek and parse the response. Raises 502 on failure."""
+    """Call DeepSeek (with Gemini fallback) and parse the response."""
     _validate_preferences(preferences)
 
     system_prompt = _build_system_prompt()
@@ -239,41 +311,38 @@ async def get_recommendations(preferences: dict) -> list[dict]:
         language=preferences["language"],
         watching_with=preferences["watching_with"],
     )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
 
-    client = _get_client()
+    content: str = ""
+
+    # ── 1. Try DeepSeek first (Testing mode) ───────────────────────────────────────────────
     try:
-        response = await client.chat.completions.create(
-            model=_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=_TEMPERATURE,
-            max_tokens=_MAX_TOKENS,
-            response_format={"type": "json_object"},
-        )
-        content = response.choices[0].message.content or ""
+        deepseek = _get_deepseek_client()
+        if not deepseek:
+            raise Exception("No DeepSeek key configured")
+        model_name = "deepseek/deepseek-chat" if settings.DEEPSEEK_API_KEY.startswith("sk-or-") else _DEEPSEEK_MODEL
+        content = await _call_ai(deepseek, model_name, messages)
     except Exception as exc:
-        err_msg = str(exc)
-        if "402" in err_msg or "Insufficient Balance" in err_msg:
-            # Fallback mock response for testing TMDB image fetching
-            content = """{
-                "movies": [
-                    {"tmdb_id": 27205, "title": "Inception", "year": 2010},
-                    {"tmdb_id": 155, "title": "The Dark Knight", "year": 2008},
-                    {"tmdb_id": 1380291, "title": "Tom Clancy's Jack Ryan: Ghost War", "year": 2026},
-                    {"tmdb_id": 24428, "title": "The Avengers", "year": 2012},
-                    {"tmdb_id": 122, "title": "The Lord of the Rings: The Return of the King", "year": 2003}
-                ]
-            }"""
-        else:
-            raise HTTPException(
-                status_code=502,
-                detail={"error": True, "code": "AI_ERROR", "message": f"DeepSeek API error: {exc}", "status": 502},
-            ) from exc
+        raise HTTPException(
+            status_code=502,
+            detail={"error": True, "code": "AI_ERROR", "message": f"OpenRouter/DeepSeek failed: {exc}", "status": 502},
+        ) from exc
 
-    # Strip any accidental markdown fences (json mode should prevent these, but be defensive)
-    content = re.sub(r"```(?:json)?", "", content).strip()
+    # ── Parse response ────────────────────────────────────────────────────
+    content = content.strip()
+    
+    # Extract JSON object if wrapped in markdown or conversational text
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", content, re.DOTALL)
+    if match:
+        content = match.group(1).strip()
+    else:
+        # Try to find the outermost curly braces
+        match = re.search(r"(\{.*\})", content, re.DOTALL)
+        if match:
+            content = match.group(1).strip()
 
     try:
         payload = json.loads(content)
@@ -281,7 +350,7 @@ async def get_recommendations(preferences: dict) -> list[dict]:
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail={"error": True, "code": "AI_ERROR", "message": "Failed to parse AI response", "status": 502},
+            detail={"error": True, "code": "AI_ERROR", "message": f"Failed to parse AI response. Raw output: {content[:200]}...", "status": 502},
         ) from exc
 
     results = _normalise(raw_list)

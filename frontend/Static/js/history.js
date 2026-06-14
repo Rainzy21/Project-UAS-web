@@ -29,7 +29,7 @@
 
             try {
                 const data = await window.Api.get(`/api/recommendations/history?page=${page}&limit=${limit}`);
-                const sessions = data.sessions || data || [];
+                const sessions = data.items || data.sessions || (Array.isArray(data) ? data : []);
                 renderHistory(sessions);
             } catch (err) {
                 list.innerHTML = `<p class="text-center text-white/40 py-12">${err.message || 'Failed to load history.'}</p>`;

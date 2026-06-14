@@ -1,10 +1,3 @@
--- ============================================================
--- JALANKAN DI: Supabase Dashboard → SQL Editor → New Query
--- ============================================================
-
--- ── OPSI A: Buat RPC Function (lebih aman) ─────────────────
--- Jalankan ini PERTAMA
-
 CREATE OR REPLACE FUNCTION public.save_movie_to_wishlist(
     p_tmdb_id   INTEGER,
     p_title     TEXT,
