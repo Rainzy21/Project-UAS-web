@@ -22,48 +22,49 @@
             }
 
             if (verifyBanner) {
-                const verified = await window.Auth.isEmailVerified();
-                verifyBanner.classList.toggle('hidden', verified);
+                const needsVerify = user
+                    && !user.email_confirmed_at
+                    && window.Auth.hasPasswordIdentity(user);
+                verifyBanner.classList.toggle('hidden', !needsVerify);
             }
         } else {
             guestSection.classList.remove('hidden');
             userSection.classList.add('hidden');
             if (verifyBanner) verifyBanner.classList.add('hidden');
         }
-        // Notify other modules of auth state change
         document.dispatchEvent(new CustomEvent('auth:statechange', { detail: { loggedIn } }));
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
         await update();
 
-        // Logout button
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 if (window.Auth) {
                     await window.Auth.logout();
-                    await update(); // re-run to dispatch statechange
+                    await update();
                 }
             });
         }
 
-        // Resend verification
         const resendBtn = document.getElementById('resend-verify-btn');
         if (resendBtn) {
-            resendBtn.addEventListener('click', async () => {
+            resendBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                resendBtn.disabled = true;
                 try {
-                    const user = await window.Auth.getUser();
-                    await window.Auth.resendVerification(user ? user.email : '');
-                    if (window.showToast) window.showToast('Verification email sent!', 'success');
-                } catch {
-                    if (window.showToast) window.showToast('Failed to send. Try again later.', 'error');
+                    await window.Auth.resendVerificationEmail();
+                    if (window.showToast) window.showToast('Verification email sent.', 'success');
+                } catch (err) {
+                    if (window.showToast) window.showToast(err.message || 'Failed to resend email.', 'error');
+                } finally {
+                    resendBtn.disabled = false;
                 }
             });
         }
 
-        // Scroll-triggered glass nav
         const nav = document.querySelector('.glass-nav');
         if (nav) {
             window.addEventListener('scroll', () => {
@@ -71,12 +72,18 @@
             }, { passive: true });
         }
 
-        // Check auth=required query param
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('auth') === 'required') {
+        document.addEventListener('click', async (e) => {
+            const link = e.target.closest('.js-rec-cta');
+            if (!link || link.tagName !== 'A') return;
+
             const loggedIn = window.Auth ? await window.Auth.isLoggedIn() : false;
-            if (!loggedIn && window.Auth) window.Auth.showModal('login');
-        }
+            if (loggedIn) return;
+
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            if (href) sessionStorage.setItem('postAuthRedirect', href);
+            if (window.Auth) window.Auth.showModal('login');
+        });
     });
 
     window.Nav = { update };

@@ -12,11 +12,19 @@ ALLOWED_GENRES: set[str] = {
 }
 
 ALLOWED_MOODS: set[str] = {
-    "Feel good",
-    "Dark & intense",
-    "Thrilling",
+    "Unsettled",
+    "Inspired",
+    "Entertained",
     "Emotional",
-    "Lighthearted",
+    "Thrilled",
+}
+
+ALLOWED_PLATFORMS: set[str] = {
+    "Netflix",
+    "Disney+",
+    "HBO Max",
+    "Amazon Prime",
+    "Any",
 }
 
 ALLOWED_ERAS: set[str] = {

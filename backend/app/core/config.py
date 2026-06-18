@@ -6,6 +6,7 @@ _ENV_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env")
 
 class Settings(BaseSettings):
     SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str = ""
     SUPABASE_JWT_SECRET: str
     SUPABASE_SERVICE_ROLE_KEY: str
 
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     TMDB_CACHE_TTL: int = 3600
 
     DEEPSEEK_API_KEY: str = ""
-    GEMINI_API_KEY: str = "AIzaSyDefault-ReplaceWithRealKey"
+    GEMINI_API_KEY: str = ""
     AI_CANDIDATE_COUNT: int = 15
 
     FRONTEND_URL: str = "http://localhost:5500"

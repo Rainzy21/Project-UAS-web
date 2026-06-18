@@ -35,8 +35,7 @@ _GEMINI_MODEL = "gemini-2.0-flash"
 _TEMPERATURE = 0.3     # low → factual / consistent TMDB IDs
 _MAX_TOKENS = 2048
 
-# Default Gemini API key fallback
-_DEFAULT_GEMINI_KEY = "AIzaSyDefault-ReplaceWithRealKey"
+# Default Gemini API key fallback — removed; set GEMINI_API_KEY in .env
 
 _DEEPSEEK_CLIENT: AsyncOpenAI | None = None
 _GEMINI_CLIENT: AsyncOpenAI | None = None
@@ -185,11 +184,11 @@ def _audience_clause(watching_with: str) -> str:
 
 def _mood_clause(mood: str) -> str:
     rules = {
-        "Feel good": "uplifting, warm, optimistic; exclude anything bleak, disturbing, tragic, or graphically violent",
-        "Dark & intense": "serious, heavy, morally complex, suspenseful or grim; exclude lighthearted comedies and family films",
-        "Thrilling": "high-stakes, suspenseful, edge-of-seat pacing",
-        "Emotional": "character-driven, moving, tear-jerker quality",
-        "Lighthearted": "fun, easy-going, low-stakes; exclude heavy dramas or grim thrillers",
+        "Unsettled": "psychologically tense, morally ambiguous, lingers after viewing; exclude feel-good comedies and light entertainment",
+        "Inspired": "uplifting, ambitious, thought-provoking; films that expand perspective or motivate",
+        "Entertained": "fun, engaging, accessible; crowd-pleasers without heavy homework",
+        "Emotional": "character-driven, moving, real emotional stakes; tear-jerker or deeply human stories",
+        "Thrilled": "high-stakes, edge-of-seat, kinetic pacing; suspenseful or action-driven",
     }
     return f"- Mood MUST be {mood}: {rules.get(mood, mood)}"
 
@@ -299,8 +298,33 @@ async def _call_ai(client: AsyncOpenAI, model: str, messages: list) -> str:
     return response.choices[0].message.content or ""
 
 
+def _parse_ai_content(content: str) -> list:
+    """Extract and parse JSON movie list from raw AI output."""
+    content = content.strip()
+    if not content:
+        raise ValueError("Empty AI response")
+
+    try:
+        payload = json.loads(content)
+        return _extract_list(payload)
+    except json.JSONDecodeError:
+        pass
+
+    match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", content, re.DOTALL)
+    if match:
+        content = match.group(1).strip()
+    else:
+        start = content.find("{")
+        end = content.rfind("}")
+        if start != -1 and end > start:
+            content = content[start : end + 1]
+
+    payload = json.loads(content)
+    return _extract_list(payload)
+
+
 async def get_recommendations(preferences: dict) -> list[dict]:
-    """Call DeepSeek (with Gemini fallback) and parse the response."""
+    """Call Gemini (with DeepSeek fallback) and parse the response."""
     _validate_preferences(preferences)
 
     system_prompt = _build_system_prompt()
@@ -317,40 +341,48 @@ async def get_recommendations(preferences: dict) -> list[dict]:
     ]
 
     content: str = ""
+    last_error: Exception | None = None
 
-    # ── 1. Try DeepSeek first (Testing mode) ───────────────────────────────────────────────
-    try:
-        deepseek = _get_deepseek_client()
-        if not deepseek:
-            raise Exception("No DeepSeek key configured")
-        model_name = "deepseek/deepseek-chat" if settings.DEEPSEEK_API_KEY.startswith("sk-or-") else _DEEPSEEK_MODEL
-        content = await _call_ai(deepseek, model_name, messages)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail={"error": True, "code": "AI_ERROR", "message": f"OpenRouter/DeepSeek failed: {exc}", "status": 502},
-        ) from exc
-
-    # ── Parse response ────────────────────────────────────────────────────
-    content = content.strip()
-    
-    # Extract JSON object if wrapped in markdown or conversational text
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", content, re.DOTALL)
-    if match:
-        content = match.group(1).strip()
+    # ── 1. Try Gemini first ───────────────────────────────────────────────
+    if settings.GEMINI_API_KEY:
+        try:
+            content = await _call_gemini_native(settings.GEMINI_API_KEY, messages)
+        except Exception as exc:
+            logger.warning("Gemini failed (%s), falling back to DeepSeek.", exc)
+            last_error = exc
     else:
-        # Try to find the outermost curly braces
-        match = re.search(r"(\{.*\})", content, re.DOTALL)
-        if match:
-            content = match.group(1).strip()
+        last_error = Exception("GEMINI_API_KEY not configured")
+
+    # ── 2. Fallback: DeepSeek / OpenRouter ────────────────────────────────
+    if not content:
+        try:
+            deepseek = _get_deepseek_client()
+            if not deepseek:
+                raise Exception("DEEPSEEK_API_KEY not configured")
+            model_name = (
+                "deepseek/deepseek-chat"
+                if settings.DEEPSEEK_API_KEY.startswith("sk-or-")
+                else _DEEPSEEK_MODEL
+            )
+            content = await _call_ai(deepseek, model_name, messages)
+        except Exception as exc:
+            detail = f"Both AI providers failed. Gemini: {last_error}; DeepSeek: {exc}"
+            raise HTTPException(
+                status_code=502,
+                detail={"error": True, "code": "AI_ERROR", "message": detail, "status": 502},
+            ) from exc
 
     try:
-        payload = json.loads(content)
-        raw_list = _extract_list(payload)
+        raw_list = _parse_ai_content(content)
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail={"error": True, "code": "AI_ERROR", "message": f"Failed to parse AI response. Raw output: {content[:200]}...", "status": 502},
+            detail={
+                "error": True,
+                "code": "AI_ERROR",
+                "message": f"Failed to parse AI response. Raw output: {content[:200]}...",
+                "status": 502,
+            },
         ) from exc
 
     results = _normalise(raw_list)

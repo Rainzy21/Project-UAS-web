@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing in… · SJ MovieReview</title>
+    <script src="Static/js/origin-guard.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="Static/css/style.css">
+    <style>
+        .auth-callback-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-callback-card {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            max-width: 360px;
+        }
+        .auth-callback-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.25rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="auth-callback-page">
+        <div class="glass auth-callback-card">
+            <div class="auth-callback-spinner" id="spinner"></div>
+            <p class="text-white font-medium mb-1" id="callback-title">Signing you in…</p>
+            <p class="text-sm text-white/40" id="callback-msg">Just a moment.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="Static/js/config.js"></script>
+    <script src="Static/js/auth.js"></script>
+    <script>
+        (async function () {
+            const titleEl = document.getElementById('callback-title');
+            const msgEl = document.getElementById('callback-msg');
+            const spinner = document.getElementById('spinner');
+
+            function fail(message) {
+                titleEl.textContent = 'Sign-in failed';
+                msgEl.textContent = message;
+                spinner.classList.add('hidden');
+                setTimeout(() => { window.location.href = '/?auth=required'; }, 3500);
+            }
+
+            const sb = window.Auth && window.Auth.getClient();
+            if (!sb) {
+                fail('Auth is not configured.');
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const err = params.get('error_description') || params.get('error');
+            if (err) {
+                fail(decodeURIComponent(err.replace(/\+/g, ' ')));
+                return;
+            }
+
+            // Email confirmation links use hash tokens (#access_token=...)
+            const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            if (accessToken && refreshToken) {
+                const { data, error } = await sb.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                });
+                if (error) {
+                    fail(error.message);
+                    return;
+                }
+                if (!data.session) {
+                    fail('No session found. Try again.');
+                    return;
+                }
+                const redirect = sessionStorage.getItem('postAuthRedirect') || '/';
+                sessionStorage.removeItem('postAuthRedirect');
+                window.location.replace(redirect);
+                return;
+            }
+
+            const code = params.get('code');
+            if (!code) {
+                fail('No authorization code in callback URL. Try signing in again.');
+                return;
+            }
+
+            const { data, error } = await sb.auth.exchangeCodeForSession(code);
+            if (error) {
+                fail(error.message);
+                return;
+            }
+
+            if (!data.session) {
+                fail('No session found. Try again.');
+                return;
+            }
+
+            const redirect = sessionStorage.getItem('postAuthRedirect') || '/';
+            sessionStorage.removeItem('postAuthRedirect');
+            window.location.replace(redirect);
+        })();
+    </script>
+</body>
+</html>

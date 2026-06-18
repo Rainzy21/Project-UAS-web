@@ -4,12 +4,17 @@ auth.py — Token verification using Supabase Admin SDK.
 Manual decode JWT with PyJWT to avoid gotrue "alg" mismatch bugs
 and save network calls.
 """
+from __future__ import annotations
+
 import jwt
 from fastapi import HTTPException, Request
 from app.core.config import settings
 
 from app.core.supabase_client import supabase_admin
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MinimalUser:
     def __init__(self, id: str, email_confirmed_at: str | None):
@@ -55,8 +60,10 @@ async def verify_supabase_token(token: str, require_verified: bool = True):
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
+    except HTTPException:
+        raise
     except Exception as exc:
-        print(f"[auth] Token verification failed: {exc}")
+        logger.warning("Token verification failed: %s", exc)
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

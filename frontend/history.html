@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recommendation History · SJ MovieRecommendation</title>
     <meta name="description" content="View your past AI movie recommendation sessions and the films that were suggested.">
+    <script src="Static/js/origin-guard.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Static/css/style.css">
@@ -20,9 +21,11 @@
                 <span class="text-white font-semibold tracking-wide text-sm">MovieRecommendation</span>
             </a>
             <div class="flex items-center gap-6 text-sm">
-                <a href="recommendations.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks</a>
+                <a href="recommendations.html" class="lp-btn lp-btn-secondary lp-nav-rec-btn js-rec-cta text-xs px-4 py-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[11px]"></i> Get AI Picks
+                </a>
                 <div id="nav-guest" class="flex items-center gap-3">
-                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up</button>
+                    <button id="login-trigger" class="glass-btn glass-btn-primary text-xs px-4 py-2"><i class="fa-regular fa-user text-[11px]"></i> Login</button>
                 </div>
                 <div id="nav-user" class="hidden flex items-center gap-4">
                     <a href="my-list.html" class="text-white/60 hover:text-white transition flex items-center gap-2"><i class="fa-regular fa-bookmark text-xs"></i> My List</a>
@@ -64,8 +67,8 @@
                 </div>
                 <h3 class="text-xl font-heading font-semibold mb-2">No history yet</h3>
                 <p class="text-white/40 text-sm mb-6 max-w-sm mx-auto">Your AI recommendation sessions will appear here. Get started with your first set of picks!</p>
-                <a href="recommendations.html" class="glass-btn glass-btn-primary text-sm px-6 py-3 inline-flex">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Recommendations
+                <a href="recommendations.html" class="glass-btn glass-btn-primary text-sm px-6 py-3 inline-flex js-rec-cta">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Picks
                 </a>
             </div>
         </div>
@@ -82,52 +85,9 @@
         </div>
     </footer>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
-        <div class="glass-modal">
-            <div class="p-8">
-                <div class="flex justify-center mb-6">
-                    <div class="lp-logo-badge text-2xl rounded-lg px-3 py-1">SJ</div>
-                </div>
-                <div data-auth-panel="login">
-                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2><p class="text-sm text-white/40">Sign in to your account</p></div>
-                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
-                    <form id="auth-login-form" class="space-y-5">
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="••••••••" required></div>
-                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Login</button>
-                    </form>
-                    <hr class="glass-divider">
-                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
-                </div>
-                <div data-auth-panel="signup" class="hidden">
-                    <div class="text-center mb-6"><h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2><p class="text-sm text-white/40">Join SJ MovieReview today</p></div>
-                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
-                    <form id="auth-signup-form" class="space-y-4">
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label><input type="text" name="name" class="glass-input" placeholder="Your name" required></div>
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label><input type="email" name="email" class="glass-input" placeholder="Enter your email" required></div>
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label><input type="password" name="password" class="glass-input" placeholder="Create a password" required></div>
-                        <div><label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label><input type="password" name="confirm_password" class="glass-input" placeholder="Repeat password" required></div>
-                        <button type="submit" class="w-full glass-btn glass-btn-primary py-3 text-sm">Create Account</button>
-                    </form>
-                    <hr class="glass-divider">
-                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
-                </div>
-                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-        </div>
-    </div>
-
     <!-- Supabase JS client (must load FIRST) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        window.APP_CONFIG = {
-            API_BASE: 'http://localhost:8000',
-            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905',
-            SUPABASE_URL: 'https://nwvvwghvdnbrltektuno.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dnZ3Z2h2ZG5icmx0ZWt0dW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjQ2MDMsImV4cCI6MjA5NTIwMDYwM30.Brl67HzxcSoYrs9AtY8kVtofLLa0k9bJAdsmpIpb7Ns'
-        };
-    </script>
+    <script src="Static/js/config.js"></script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>

@@ -10,7 +10,7 @@
         if (!list) return;
 
         // Auth guard
-        if (!window.Auth || !window.Auth.isLoggedIn()) {
+        if (!window.Auth || !(await window.Auth.isLoggedIn())) {
             window.location.href = '/?auth=required';
             return;
         }

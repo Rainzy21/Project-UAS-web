@@ -20,6 +20,19 @@
             return;
         }
 
+        const hasPassword = window.Auth.hasPasswordIdentity(session.user);
+        const passwordSection = document.getElementById('password-section');
+        const deletePassword = document.getElementById('delete-password');
+        const deleteModalDesc = document.getElementById('delete-modal-desc');
+
+        if (hasPassword) {
+            passwordSection?.classList.remove('hidden');
+            deletePassword?.classList.remove('hidden');
+            if (deleteModalDesc) {
+                deleteModalDesc.textContent = 'This will permanently delete your account and all saved movies. Enter your password to confirm.';
+            }
+        }
+
         // ── Load user profile ────────────────────────────────
         async function loadProfile() {
             try {
@@ -30,6 +43,7 @@
                     email: user.email,
                     email_verified: user.email_verified,
                     created_at: user.created_at,
+                    has_password: user.has_password,
                 });
             } catch (err) {
                 console.warn('[profile] API /api/users/me failed:', err.status, err.message);
@@ -55,7 +69,7 @@
             }
         }
 
-        function renderProfile({ name, email, email_verified, created_at }) {
+        function renderProfile({ name, email, email_verified, created_at, has_password }) {
             const nameEl = document.getElementById('profile-name');
             const emailEl = document.getElementById('profile-email');
             const sinceEl = document.getElementById('profile-since');
@@ -68,10 +82,8 @@
                 ? new Date(created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
                 : '';
 
-            // Avatar letter
             if (avatarEl) avatarEl.textContent = (name || email || 'U')[0].toUpperCase();
 
-            // Email verification badge
             if (badge) {
                 if (email_verified) {
                     badge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> Verified';
@@ -79,6 +91,15 @@
                 } else {
                     badge.innerHTML = '<i class="fa-solid fa-circle-exclamation text-amber-400"></i> Not Verified';
                     badge.className = 'text-xs text-amber-400 flex items-center gap-1';
+                }
+            }
+
+            const showPassword = has_password ?? window.Auth.hasPasswordIdentity(session.user);
+            if (showPassword) {
+                passwordSection?.classList.remove('hidden');
+                deletePassword?.classList.remove('hidden');
+                if (deleteModalDesc) {
+                    deleteModalDesc.textContent = 'This will permanently delete your account and all saved movies. Enter your password to confirm.';
                 }
             }
         }
@@ -172,6 +193,13 @@
             });
         }
 
+        // ── Sign out ─────────────────────────────────────────
+        document.getElementById('profile-signout-btn')?.addEventListener('click', async () => {
+            if (window.Auth && window.Auth.logout) {
+                await window.Auth.logout();
+            }
+        });
+
         // ── Delete account ───────────────────────────────────
         const deleteBtn = document.getElementById('delete-account-btn');
         const deleteModal = document.getElementById('delete-modal');
@@ -188,10 +216,12 @@
                 setTimeout(() => deleteModal.classList.add('hidden'), 300);
             });
             deleteConfirm.addEventListener('click', async () => {
-                const pw = document.getElementById('delete-password').value;
-                if (!pw) return;
+                const pwEl = document.getElementById('delete-password');
+                const pw = pwEl && !pwEl.classList.contains('hidden') ? pwEl.value : '';
+                if (hasPassword && !pw) return;
                 try {
-                    await window.Api.delete('/api/users/me', { body: JSON.stringify({ current_password: pw }) });
+                    const body = hasPassword ? { current_password: pw } : {};
+                    await window.Api.delete('/api/users/me', { body: JSON.stringify(body) });
                     window.Auth.logout && window.Auth.logout();
                     window.location.href = '/';
                 } catch (err) {

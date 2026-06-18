@@ -1,0 +1,524 @@
+%% SJ MovieReview - Full User Flow and System Logic
+%% Project: Project-UAS-web
+%%
+%% mermaid.live usage:
+%%   - Paste ONE section at a time (between --- markers), OR
+%%   - Paste the full file if your Mermaid version supports multi-diagram docs
+%% Sections are separated by --- on its own line
+
+%% 1. SYSTEM ARCHITECTURE
+flowchart TB
+    subgraph Client["Browser Frontend"]
+        Pages["HTML Pages<br/>index, detail, recommendations<br/>my-list, history, profile"]
+        JS["Vanilla JS Modules<br/>auth.js, api.js, nav.js<br/>landing.js, recommendations.js, my-list.js<br/>history.js, profile.js, chat.js"]
+        SupaClient["Supabase JS Client<br/>anon key"]
+    end
+
+    subgraph Backend["FastAPI Backend port 8000"]
+        AuthCore["auth.py JWT verification"]
+        Routers["Routers movies, recommendations, chat, users"]
+        Services["Services tmdb, ai, recommendation"]
+        SupaAdmin["Supabase Admin Client service role key"]
+    end
+
+    subgraph External["External Services"]
+        TMDB["TMDB API movie metadata"]
+        DeepSeek["DeepSeek OpenRouter AI recommendations"]
+        Gemini["Google Gemini chat primary"]
+        Supabase["Supabase Auth and PostgreSQL"]
+    end
+
+    Pages --> JS
+    JS --> SupaClient
+    JS -->|"Api JWT Bearer"| Routers
+    JS -->|"AppAPI public"| TMDB
+    SupaClient -->|"auth and saved_movies CRUD"| Supabase
+
+    Routers --> AuthCore
+    Routers --> Services
+    Routers --> SupaAdmin
+    AuthCore --> Supabase
+    SupaAdmin --> Supabase
+    Services --> TMDB
+    Services --> DeepSeek
+    Routers --> Gemini
+
+---
+
+%% 2. PAGE NAVIGATION MAP
+flowchart LR
+    Index["index.html Landing Public"]
+    Detail["detail.html Movie Detail Public"]
+    Rec["recommendations.html AI Wizard Login required"]
+    MyList["my-list.html Watchlist Login required"]
+    History["history.html Rec History Login intended"]
+    Profile["profile.html User Profile Login required"]
+
+    Index -->|"movie card or hero"| Detail
+    Index -->|"Get AI Recommendations"| Rec
+    Index -->|"nav AI Picks"| Rec
+    Index -->|"nav My List"| MyList
+    Index -->|"nav Profile"| Profile
+
+    Detail -->|"Save to My List"| MyList
+    Rec -->|"result card"| Detail
+    MyList -->|"card click"| Detail
+    MyList -->|"empty state"| Rec
+    History -->|"poster click"| Detail
+    History -->|"empty state"| Rec
+    Profile -->|"quick link"| MyList
+    Profile -->|"quick link"| History
+
+    Rec -->|"no session"| Index
+    MyList -->|"no session"| Index
+    Profile -->|"no session"| Index
+    History -->|"no session weak guard"| Index
+
+    Index -->|"View All link"| Missing["movies.html NOT IMPLEMENTED"]
+
+---
+
+%% 3. GLOBAL NAV AND SESSION STATE
+stateDiagram-v2
+    [*] --> Guest
+
+    Guest --> Guest: Browse movies via TMDB
+    Guest --> AuthModal: Click Login or protected action
+    Guest --> AuthModal: URL auth=required
+
+    AuthModal --> Guest: Close modal
+    AuthModal --> LoggedIn: Login success
+    AuthModal --> PendingVerify: Signup success email sent
+
+    PendingVerify --> LoggedIn: User confirms email
+    PendingVerify --> PendingVerify: Resend verification banner
+
+    LoggedIn --> LoggedIn: Use AI Picks My List Profile
+    LoggedIn --> Guest: Logout redirect home
+
+    note right of Guest
+        Nav shows Login Sign Up
+        Watchlist actions open login modal
+    end note
+
+    note right of LoggedIn
+        Nav shows My List Profile Logout
+        JWT stored in Supabase session
+        api.js attaches Bearer token to FastAPI
+    end note
+
+    note right of PendingVerify
+        Banner shown on all pages
+        POST recommendations generate returns 403 if unverified
+        Profile endpoints still work
+    end note
+
+---
+
+%% 4. AUTHENTICATION FLOWS Frontend to Supabase
+flowchart TD
+    Start([User opens any page]) --> LoadAuth[auth.js init Supabase client from APP_CONFIG]
+    LoadAuth --> NavUpdate[nav.js updateNavState]
+    NavUpdate --> CheckSession{Session exists?}
+
+    CheckSession -->|No| ShowGuest[Show nav-guest]
+    CheckSession -->|Yes| ShowUser[Show nav-user and email]
+    ShowUser --> CheckVerified{email_confirmed_at?}
+    CheckVerified -->|No| ShowBanner[Show verify-email banner]
+    CheckVerified -->|Yes| Ready[Full access to AI features]
+
+    subgraph LoginFlow["Login Flow"]
+        L1[User opens auth modal] --> L2[Enter email and password]
+        L2 --> L3[Supabase signInWithPassword]
+        L3 -->|error| L4[Show auth-error in modal]
+        L3 -->|success| L5[Hide modal toast Welcome back]
+        L5 --> NavUpdate
+    end
+
+    subgraph SignupFlow["Signup Flow"]
+        S1[Switch to signup panel] --> S2[Enter name email password]
+        S2 --> S3[Supabase signUp with user_metadata]
+        S3 -->|error| S4[Show auth-error]
+        S3 -->|success| S5[Toast check email to verify]
+        S5 --> NavUpdate
+    end
+
+    subgraph ForgotFlow["Forgot Password Flow"]
+        F1[Forgot password panel] --> F2[Enter email]
+        F2 --> F3[resetPasswordForEmail redirect reset-password.html]
+        F3[resetPasswordForEmail redirect reset-password.html]
+        F3 --> F4[Show forgot-sent panel]
+        F4 --> ResetPage[reset-password.html set new password]
+    end
+
+    subgraph LogoutFlow["Logout Flow"]
+        O1[Click Logout] --> O2[Supabase signOut]
+        O2 --> O3[Redirect to home]
+    end
+
+---
+
+%% 5. BACKEND JWT VERIFICATION
+flowchart TD
+    Req([HTTP Request]) --> Header{Authorization Bearer token?}
+    Header -->|No| E401A[401 Missing token]
+    Header -->|Yes| Extract[Extract JWT]
+
+    Extract --> Alg{JWT algorithm?}
+    Alg -->|HS256| LocalDecode[Decode with SUPABASE_JWT_SECRET audience authenticated]
+    Alg -->|RS256 or other| SupaLookup[supabase_admin auth get_user token]
+
+    LocalDecode --> Payload{sub user_id present?}
+    SupaLookup --> Payload
+    Payload -->|No| E401B[401 Invalid token payload]
+    Payload -->|Yes| Verified{require_verified and email not confirmed?}
+
+    Verified -->|Yes| E403[403 EMAIL_NOT_VERIFIED]
+    Verified -->|No| OK[Return user_id to router]
+
+    subgraph AuthTiers["Auth Tiers by Endpoint"]
+        T1[Public movies chat GET root]
+        T2[Token only api users me require_verified false]
+        T3[Token plus verified email api recommendations]
+    end
+
+---
+
+%% 6. LANDING PAGE Guest Discovery Flow
+flowchart TD
+    Land([index.html loads]) --> Init[landing.js init]
+    Init --> TMDB1[TMDB trending movie week hero and trending row]
+    Init --> TMDB2[TMDB movie popular poster ticker]
+    Init --> TMDB3[TMDB movie now_playing popular grid]
+
+    TMDB1 --> Interact{User action}
+    TMDB2 --> Interact
+    TMDB3 --> Interact
+
+    Interact -->|"Click movie card"| GoDetail[Navigate detail.html with tmdb_id]
+    Interact -->|"Hero arrows dots swipe"| Carousel[Rotate hero slides]
+    Interact -->|"Watchlist button"| WatchlistGate{Logged in?}
+    Interact -->|"Get AI Recommendations"| GoRec[Navigate recommendations.html]
+    Interact -->|"View All"| BrokenLink[movies.html missing page]
+
+    WatchlistGate -->|No| LoginModal[Auth showModal login]
+    WatchlistGate -->|Yes| WishlistLogic[See Watchlist Flow diagram]
+
+    GoRec --> RecGuard{Session?}
+    RecGuard -->|No| RedirectAuth[Redirect index auth required]
+    RecGuard -->|Yes| RecPage[Show 5-step wizard]
+
+    subgraph LoggedInSync["If logged in on load"]
+        Sync[Supabase saved_movies select tmdb_id] --> SetBtns[Mark watchlist buttons saved]
+    end
+
+---
+
+%% 7. MOVIE DETAIL PAGE
+flowchart TD
+    Open([detail.html with tmdb_id]) --> ParseId{Valid id in URL?}
+    ParseId -->|No| Error[Show error state]
+    ParseId -->|Yes| Fetch[AppAPI fetchMovieDetail TMDB movie credits videos]
+
+    Fetch --> Render[Render backdrop poster genres rating runtime overview cast trailer]
+    Render --> Actions{User action}
+
+    Actions -->|"Watch Trailer"| YouTube[Open YouTube in new tab]
+    Actions -->|"Save to My List"| SaveGate{Logged in?}
+    Actions -->|"Nav links"| OtherPages[Other pages]
+
+    SaveGate -->|No| LoginModal[Auth showModal login]
+    SaveGate -->|Yes| SaveFlow[See Watchlist Flow diagram]
+
+---
+
+%% 8. WATCHLIST Save Remove Logic Supabase Direct
+flowchart TD
+    Action([User clicks Watchlist or Save]) --> AuthCheck{Supabase session?}
+    AuthCheck -->|No| Modal[Show login modal]
+    AuthCheck -->|Yes| AlreadySaved{Already in savedIds?}
+
+    AlreadySaved -->|"Yes remove"| Delete[saved_movies delete by tmdb_id and user_id]
+    Delete --> UI1[Update button toast Removed]
+    AlreadySaved -->|"No add"| TryRPC
+
+    TryRPC[rpc save_movie_to_wishlist with movie metadata]
+    TryRPC -->|success| UI2[Add to savedIds toast Saved]
+    TryRPC -->|RPC not found| Fallback
+
+    Fallback[movies upsert then saved_movies insert]
+    Fallback -->|RLS error| SQLFix[Run supabase_fix_wishlist.sql]
+    Fallback -->|success| UI2
+
+    subgraph DataModel["Supabase Tables"]
+        MoviesTable[movies table tmdb_id title poster rating year]
+        SavedTable[saved_movies user_id tmdb_id saved_at RLS]
+        MoviesTable --> SavedTable
+    end
+
+---
+
+%% 9. MY LIST PAGE View Filter Delete
+flowchart TD
+    Open([my-list.html]) --> Guard{Auth getSession?}
+    Guard -->|No| Redirect[index auth required]
+    Guard -->|Yes| Load[Supabase saved_movies join movies order saved_at desc]
+
+    Load --> Enrich{Movie row incomplete?}
+    Enrich -->|Yes| TMDBFallback[AppAPI fetchMovieDetail fallback]
+    Enrich -->|No| Grid[Render glass-card grid]
+    TMDBFallback --> Grid
+
+    Grid --> Empty{Any items?}
+    Empty -->|No| EmptyUI[Empty state link to recommendations.html]
+    Empty -->|Yes| FilterNode
+
+    FilterNode{Filter selected}
+    FilterNode -->|All| ShowAll[Show allMovies]
+    FilterNode -->|"Recently Added"| SortDate[Sort by saved_at desc]
+    FilterNode -->|"Highest Rated"| SortRating[Sort by rating desc]
+
+    ShowAll --> UserAct{User action}
+    SortDate --> UserAct
+    SortRating --> UserAct
+
+    UserAct -->|"Click card"| Detail[detail.html with id]
+    UserAct -->|"Delete trash icon"| Confirm{Confirm dialog?}
+    Confirm -->|Yes| Del[saved_movies delete by id]
+    Del --> Reload[Reload grid]
+    Confirm -->|No| Grid
+
+---
+
+%% 10. AI RECOMMENDATIONS Frontend Wizard 5 Steps
+flowchart TD
+    Enter([recommendations.html]) --> AuthGuard{Auth getSession at submit?}
+    AuthGuard -->|No| SavePending[Save answers sessionStorage show login modal]
+    AuthGuard -->|Yes| Step1
+
+    Step1[Step 1 Genre Action Drama Comedy Horror Sci-fi Romance Thriller Animation]
+    Step1 --> Step2[Step 2 Mood Unsettled Inspired Entertained Emotional Thrilled]
+    Step2 --> Step3[Step 3 Era Classic 80s-90s 2000s 2010s Recent Any]
+    Step3 --> Step4[Step 4 Language English Korean Spanish French Japanese Any]
+    Step4 --> Step5[Step 5 Audience Solo Partner Friends Family]
+
+    Step5 --> Submit[Click Get Recommendations]
+    Submit --> ReCheck{Session still valid?}
+    ReCheck -->|No| Redirect
+    ReCheck -->|Yes| API[POST api recommendations generate with JWT and answers]
+
+    API --> Resp{Response}
+    Resp -->|200| Results[Render up to 10 movie cards]
+    Resp -->|403 EMAIL_NOT_VERIFIED| VerifyMsg[Toast verify email first show banner]
+    Resp -->|429| LimitMsg[Toast daily limit 10 per day]
+    Resp -->|422 or 502| ErrMsg[Toast validation or AI error]
+
+    Results --> CardClick[Click card to detail.html]
+    Results --> StartOver[Start Over reset wizard step 1]
+
+---
+
+%% 11. AI RECOMMENDATIONS Backend Pipeline
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as Frontend
+    participant API as FastAPI
+    participant Auth as auth.py
+    participant Rate as RateLimiter
+    participant Rec as recommendation_service
+    participant AI as ai_service
+    participant TMDB as tmdb_service
+    participant DB as SupabaseLogs
+
+    User->>FE: Complete 5-step wizard
+    FE->>API: POST recommendations generate with preferences
+    API->>Auth: get_user_id_from_request verified email
+    Auth-->>API: user_id
+    API->>Rate: check rate limit 10 per 24h
+    Rate-->>API: OK or 429
+
+    API->>Rec: generate preferences
+    Rec->>AI: get_recommendations preferences
+    Note over AI: Validate fields call DeepSeek parse JSON up to 15 candidates
+    AI-->>Rec: ai_results
+
+    Rec->>TMDB: fetch_all tmdb_ids concurrent
+    Note over TMDB: Cache semaphore filter adult normalize fields
+    TMDB-->>Rec: enriched movies
+
+    Note over Rec: Verify year tolerance preserve ranking cap at 10 movies
+    Rec-->>API: verified movie list
+
+    API->>DB: insert recommendation_logs row
+    API-->>FE: movies array
+    FE-->>User: Display result grid
+
+---
+
+%% 12. RECOMMENDATION HISTORY
+flowchart TD
+    Open([history.html]) --> Guard[Auth isLoggedIn guard may miss await]
+    Guard --> Fetch[GET api recommendations history page 1 limit 20 JWT verified]
+
+    Fetch --> Items{items length greater than 0?}
+    Items -->|No| Empty[Empty state to recommendations.html]
+    Items -->|Yes| Cards[Render session cards]
+
+    Cards --> CardData[Show date preference pills movie count mini posters]
+    CardData --> Expand[Click Show movies expand]
+    Expand --> Posters[Show movie grid from hydrated TMDB data]
+    Posters --> ClickPoster[Click poster to detail.html]
+
+    subgraph BackendHistory["Backend GET history logic"]
+        B1[Select recommendation_logs by user_id paginated]
+        B2[For each item fetch_all tmdb_ids]
+        B3[Attach movies array to item]
+        B1 --> B2 --> B3
+    end
+
+---
+
+%% 13. USER PROFILE MANAGEMENT
+flowchart TD
+    Open([profile.html]) --> Guard{Auth getSession?}
+    Guard -->|No| Redirect[home auth required]
+    Guard -->|Yes| LoadProfile
+
+    LoadProfile[GET api users me require_verified false]
+    LoadProfile -->|success| Display[Show name email verified badge member since]
+    LoadProfile -->|fail| Fallback[Fallback read Supabase session user]
+
+    Display --> Actions{User action}
+
+    Actions --> EditName[Inline edit name]
+    EditName --> PatchName[PATCH api users me update Supabase metadata]
+
+    Actions --> ChangePw[Change password form]
+    ChangePw --> PatchPw[PATCH api users me password Supabase admin update]
+
+    Actions --> DeleteAcct[Delete account modal]
+    DeleteAcct --> ConfirmPw[Enter password to confirm UI only]
+    ConfirmPw --> DeleteAPI[DELETE api users me Supabase admin delete_user]
+    DeleteAPI --> Logout[Auth logout redirect home]
+
+    Actions --> QuickLinks[Quick links]
+    QuickLinks --> MyList[my-list.html]
+    QuickLinks --> Hist[history.html]
+
+---
+
+%% 14. CHAT MovieBot Backend Ready Frontend Not Wired
+flowchart TD
+    Note1[chat.js exists but not included in any HTML page]
+
+    ChatUser([User sends message]) --> Validate{message non-empty and max 500 chars?}
+    Validate -->|No| E422[422 validation error]
+    Validate -->|Yes| Build[Build system prompt plus last 6 history plus user msg]
+
+    Build --> TryGemini[Try Gemini 2.0 Flash OpenAI-compatible endpoint]
+    TryGemini -->|success| Reply1[Return reply provider gemini]
+    TryGemini -->|fail| TryDeepSeek[Fallback DeepSeek chat]
+    TryDeepSeek -->|success| Reply2[Return reply provider deepseek]
+    TryDeepSeek -->|fail| E502[502 or 503 both providers failed]
+
+    subgraph ChatTraits["SJ MovieBot personality"]
+        C1[Movie recommendations and Q and A]
+        C2[Short responses 3 to 4 sentences]
+        C3[Responds in Indonesian or English]
+        C4[No real-time box office or streaming data]
+    end
+
+---
+
+%% 15. PUBLIC MOVIE API Backend TMDB Proxy
+flowchart LR
+    subgraph FrontendUsage["Frontend usage"]
+        F1[landing.js TMDB direct via APP_CONFIG key]
+        F2[detail.html AppAPI fetchMovieDetail]
+        F3[my-list.js TMDB fallback for incomplete rows]
+        F4[Backend api movies available mostly unused by frontend]
+    end
+
+    subgraph BackendMovies["GET api movies"]
+        T1[/trending to tmdb_service get_trending]
+        T2[/tmdb_id to tmdb_service fetch_movie]
+    end
+
+    subgraph TMDBLogic["tmdb_service shared logic"]
+        Cache[In-memory cache TTL 3600s]
+        Sem[Semaphore concurrency 4]
+        Adult[Filter adult content]
+        Norm[Normalize tmdb_id title overview poster rating year]
+    end
+
+    T1 --> TMDBLogic
+    T2 --> TMDBLogic
+
+---
+
+%% 16. END-TO-END USER JOURNEYS Summary
+flowchart TB
+    subgraph JourneyA["A Guest Discovery"]
+        A1[Land on index] --> A2[Browse TMDB hero trending popular]
+        A2 --> A3[Open movie detail]
+        A3 --> A4[Try watchlist opens login modal]
+    end
+
+    subgraph JourneyB["B Sign Up to AI Picks"]
+        B1[Click AI Picks as guest] --> B2[Redirect auth required]
+        B2 --> B3[Login or signup in modal]
+        B3 --> B4[Manually navigate to recommendations.html]
+        B4 --> B5[Complete 5 steps get 10 AI picks]
+        B5 --> B6[Open detail save to watchlist]
+    end
+
+    subgraph JourneyC["C Manage Watchlist"]
+        C1[Save from landing or detail] --> C2[Open my-list.html]
+        C2 --> C3[Filter delete open detail]
+    end
+
+    subgraph JourneyD["D Review Past Recommendations"]
+        D1[Profile to history.html] --> D2[Expand past sessions]
+        D2 --> D3[Click movie to detail.html]
+    end
+
+    subgraph JourneyE["E Account Management"]
+        E1[Profile page] --> E2[Edit name change password delete account]
+    end
+
+---
+
+%% 17. API AND DATA SOURCE MATRIX
+flowchart LR
+    subgraph Legend
+        direction TB
+        Pub[Public]
+        Auth[JWT required]
+        AuthV[JWT plus verified email]
+    end
+
+    subgraph FastAPIEndpoints["FastAPI Endpoints"]
+        E0[GET root Public]
+        E1[GET api movies Public]
+        E2[POST api chat Public]
+        E3[GET api users me Auth]
+        E4[PATCH api users me Auth]
+        E5[PATCH password Auth]
+        E6[DELETE api users me Auth]
+        E7[POST recommendations generate AuthV]
+        E8[GET recommendations history AuthV]
+        E9[POST GET DELETE recommendations presets Auth]
+    end
+
+    subgraph SupabaseDirect["Supabase Direct Frontend"]
+        S1[Auth login signup logout reset resend]
+        S2[saved_movies select insert delete]
+        S3[rpc save_movie_to_wishlist]
+        S4[movies upsert fallback]
+    end
+
+    subgraph TMDBDirect["TMDB Direct Frontend AppAPI"]
+        T1[trending popular now_playing]
+        T2[movie detail credits videos]
+    end

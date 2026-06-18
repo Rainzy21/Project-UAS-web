@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SJ MovieReview — AI-Powered Movie Recommendations</title>
-    <meta name="description" content="Discover your next favorite film with AI-powered recommendations. Browse trending movies, get personalized picks, and save your watchlist.">
+    <meta name="description" content="Stop scrolling. Our AI finds your next film in 60 seconds — with a reason you'll actually trust.">
+    <script src="Static/js/origin-guard.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Static/css/style.css">
@@ -12,43 +13,27 @@
 </head>
 <body class="min-h-screen relative flex flex-col">
 
-    <!-- ═══ Navigation ═══════════════════════════════════════════ -->
     <nav class="lp-nav fixed w-full z-30 px-6 md:px-10 py-4" id="main-nav">
         <div class="max-w-[1400px] mx-auto flex justify-between items-center">
             <a href="/" class="flex items-center gap-3 group">
                 <div class="lp-logo-badge">SJ</div>
                 <span class="text-white font-semibold tracking-wide text-sm">MovieRecommendation</span>
             </a>
-
             <div class="flex items-center gap-6 text-sm">
-                <a href="recommendations.html" class="lp-nav-link">
-                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i> AI Picks
-                </a>
-
-                <!-- Guest -->
                 <div id="nav-guest" class="flex items-center gap-3">
-                    <button id="login-trigger" class="lp-btn lp-btn-primary text-xs px-4 py-2">
-                        <i class="fa-regular fa-user text-[11px]"></i> Login / Sign Up
+                    <button id="login-trigger" class="lp-btn lp-btn-secondary text-xs px-4 py-2">
+                        <i class="fa-regular fa-user text-[11px]"></i> Login
                     </button>
                 </div>
-
-                <!-- Logged in -->
                 <div id="nav-user" class="hidden flex items-center gap-4">
-                    <a href="my-list.html" class="lp-nav-link">
-                        <i class="fa-regular fa-bookmark text-xs"></i> My List
-                    </a>
-                    <a href="profile.html" class="lp-nav-link">
-                        <i class="fa-regular fa-user text-xs"></i> <span id="nav-user-name">User</span>
-                    </a>
-                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
+                    <a href="my-list.html" class="lp-nav-link"><i class="fa-regular fa-bookmark text-xs"></i> My List</a>
+                    <a href="profile.html" class="lp-nav-link"><i class="fa-regular fa-user text-xs"></i> <span id="nav-user-name">User</span></a>
+                    <button id="logout-btn" class="text-white/40 hover:text-red-400 transition text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Email Verify Banner -->
     <div id="verify-banner" class="hidden fixed top-[60px] left-0 right-0 z-20 px-6">
         <div class="max-w-[1400px] mx-auto verify-banner mt-2">
             <i class="fa-solid fa-envelope text-sm"></i>
@@ -57,270 +42,116 @@
         </div>
     </div>
 
-    <!-- ═══ Hero Carousel Section ═════════════════════════════════ -->
-    <section class="lp-hero" id="hero-section">
+    <!-- ═══ Landing — sell the concept, one CTA ═════════════════ -->
+    <main class="lp-landing-minimal flex-1 flex flex-col">
+        <!-- Hero — full viewport, hook + proof -->
+        <section class="lp-hero-static lp-hero-minimal" id="hero-section">
+            <div class="lp-hero-static-bg" aria-hidden="true"></div>
+            <div class="lp-hero-static-glow" aria-hidden="true"></div>
+            <div class="lp-hero-static-overlay"></div>
+            <div class="lp-hero-minimal-content max-w-[640px] mx-auto px-6 text-center">
+                <p class="lp-hero-eyebrow">AI-powered film discovery</p>
+                <h1 class="lp-hero-headline">Stop scrolling.<br>Find a film worth watching tonight.</h1>
+                <p class="lp-hero-subline mx-auto">Answer 5 quick questions. Our AI builds 10 picks from your genre, mood, language, and more — each with a reason why it fits.</p>
 
-        <!-- Slides Container -->
-        <div class="lp-hero-slides" id="hero-slides">
-            <!-- Slides injected by JS -->
-            <div class="lp-hero-skeleton" id="hero-skeleton">
-                <div class="lp-skeleton-bg"></div>
-                <div class="lp-skeleton-content">
-                    <div class="lp-skeleton-badge"></div>
-                    <div class="lp-skeleton-title"></div>
-                    <div class="lp-skeleton-title" style="width:55%;"></div>
-                    <div class="lp-skeleton-meta"></div>
-                    <div class="lp-skeleton-text"></div>
-                    <div class="lp-skeleton-text" style="width:75%;"></div>
-                    <div class="lp-skeleton-btns"></div>
-                </div>
-            </div>
-        </div>
+                <ul class="lp-proof-list">
+                    <li>
+                        <span class="lp-proof-icon"><i class="fa-solid fa-users"></i></span>
+                        <span><strong>340,000+</strong> people found their next favorite film</span>
+                    </li>
+                    <li>
+                        <span class="lp-proof-icon"><i class="fa-solid fa-bullseye"></i></span>
+                        <span>Picks matched to <strong>your</strong> taste — not what's trending</span>
+                    </li>
+                    <li>
+                        <span class="lp-proof-icon"><i class="fa-solid fa-clock"></i></span>
+                        <span>Done in <strong>60 seconds</strong></span>
+                    </li>
+                </ul>
 
-        <!-- Progress indicators -->
-        <div class="lp-hero-indicators" id="hero-indicators"></div>
-
-        <!-- Arrows -->
-        <button class="lp-hero-arrow lp-hero-arrow-prev" id="hero-prev">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <button class="lp-hero-arrow lp-hero-arrow-next" id="hero-next">
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-
-        <!-- Auto-play progress bar -->
-        <div class="lp-hero-progress" id="hero-progress">
-            <div class="lp-hero-progress-fill" id="hero-progress-fill"></div>
-        </div>
-    </section>
-
-    <!-- ═══ Trending Row (Infinite Scroll Carousel) ══════════════ -->
-    <section class="lp-section py-14 px-6">
-        <div class="max-w-[1400px] mx-auto">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="lp-section-bar"></div>
-                <h2>🔥 Trending This Week</h2>
-            </div>
-
-            <div class="lp-scroll-wrapper">
-                <button class="lp-scroll-arrow lp-scroll-left" id="trending-left">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <div class="lp-scroll-track" id="trending-track">
-                    <!-- Cards injected by JS -->
-                    <div class="lp-cards-skeleton" id="trending-skeleton">
-                        <div class="lp-card-skeleton" style="--d:0s"></div>
-                        <div class="lp-card-skeleton" style="--d:.05s"></div>
-                        <div class="lp-card-skeleton" style="--d:.1s"></div>
-                        <div class="lp-card-skeleton" style="--d:.15s"></div>
-                        <div class="lp-card-skeleton" style="--d:.2s"></div>
-                        <div class="lp-card-skeleton" style="--d:.25s"></div>
-                    </div>
-                </div>
-                <button class="lp-scroll-arrow lp-scroll-right" id="trending-right">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ═══ Infinite Ticker (Poster Strip) ═══════════════════════ -->
-    <section class="lp-ticker-section py-4 overflow-hidden">
-        <div class="lp-ticker" id="ticker-track">
-            <!-- Posters injected by JS -->
-        </div>
-    </section>
-
-    <!-- ═══ Popular Movies Row ════════════════════════════════════ -->
-    <section class="lp-section py-14 px-6">
-        <div class="max-w-[1400px] mx-auto">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="lp-section-bar"></div>
-                <h2>⭐ Popular Right Now</h2>
-                <a href="movies.html" class="ml-auto lp-view-all">
-                    View All <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                <a href="#taste-demo" class="lp-hero-scroll">
+                    Try a sample pick
+                    <i class="fa-solid fa-chevron-down"></i>
                 </a>
             </div>
+        </section>
 
-            <div class="lp-grid" id="popular-grid">
-                <!-- Cards injected by JS -->
-                <div class="lp-cards-skeleton" id="popular-skeleton" style="display:contents">
-                    <div class="lp-card-skeleton" style="--d:0s"></div>
-                    <div class="lp-card-skeleton" style="--d:.06s"></div>
-                    <div class="lp-card-skeleton" style="--d:.12s"></div>
-                    <div class="lp-card-skeleton" style="--d:.18s"></div>
-                </div>
-            </div>
-        </div>
-    </section>
+        <!-- Try a taste — interactive sample pick -->
+        <section class="lp-taste-section" id="taste-demo">
+            <div class="max-w-[640px] mx-auto px-6 text-center">
+                <p class="lp-how-label">Try a taste</p>
+                <h2 class="lp-taste-heading">See what one pick looks like</h2>
+                <p class="lp-taste-desc">Pick a mood — we'll show you a sample match and why it fits.</p>
 
-    <!-- ═══ CTA Section ══════════════════════════════════════════ -->
-    <section class="lp-cta-section py-20 px-6">
-        <div class="max-w-3xl mx-auto text-center">
-            <div class="lp-cta-card">
-                <div class="lp-cta-glow"></div>
-                <div class="relative z-10">
-                    <div class="lp-cta-icon">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <div class="lp-taste-moods" id="taste-moods" role="group" aria-label="Choose a mood"></div>
+
+                <div class="lp-taste-card-wrap" id="taste-card-wrap">
+                    <div class="lp-taste-placeholder" id="taste-placeholder">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <span>Select a mood to preview a pick</span>
                     </div>
-                    <h2>Find Your Perfect Movie</h2>
-                    <p class="mb-8 max-w-lg mx-auto">
-                        Answer 5 quick questions and our AI will curate 10 personalized film recommendations just for you.
-                    </p>
-                    <a href="recommendations.html" class="lp-btn lp-btn-primary py-3 px-8 text-sm inline-flex gap-2 items-center">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Get AI Recommendations
-                    </a>
+                    <article class="lp-taste-card hidden" id="taste-card" aria-live="polite"></article>
                 </div>
-            </div>
-        </div>
-    </section>
 
+                <p class="lp-taste-tease hidden" id="taste-tease">
+                    That's one pick. The full quiz builds <strong>10</strong> around your genre, era, and more.
+                </p>
 
-    <!-- ═══ Footer ═══════════════════════════════════════════════ -->
-    <footer class="lp-footer w-full border-t border-white/5 mt-auto relative z-10">
-        <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="lp-logo-badge text-sm px-2 py-0.5">SJ</div>
-                <span class="text-white/40 text-sm">MovieRecommendation</span>
+                <a href="#how-it-works" class="lp-taste-scroll">How the full flow works ↓</a>
             </div>
-            <nav class="flex items-center gap-8 text-sm">
-                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
-                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
-                <a href="#" class="text-white/30 hover:text-white/60 transition">Help Center</a>
+        </section>
+
+        <!-- How it works — scroll section + CTA -->
+        <section class="lp-how-section" id="how-it-works">
+            <div class="max-w-[640px] mx-auto px-6 text-center">
+                <p class="lp-how-label">How it works</p>
+                <h2 class="lp-how-heading">Three steps to your next film</h2>
+
+                <ol class="lp-how-steps">
+                    <li>
+                        <span class="lp-how-num">1</span>
+                        <div class="lp-how-text">
+                            <strong>Tell us your taste</strong>
+                            <span>5 quick choices — genre, mood, era, language, and who's watching.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="lp-how-num">2</span>
+                        <div class="lp-how-text">
+                            <strong>AI matches your picks</strong>
+                            <span>Not trending lists — films filtered to everything you told us.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="lp-how-num">3</span>
+                        <div class="lp-how-text">
+                            <strong>Get your 10 films</strong>
+                            <span>Each pick comes with a match score and a one-line reason.</span>
+                        </div>
+                    </li>
+                </ol>
+
+                <p class="lp-how-note">Sign in with Google to unlock your results — your answers are saved.</p>
+
+                <a href="recommendations.html" class="lp-btn lp-btn-primary lp-btn-ai-call lp-landing-cta">
+                    Find My Films →
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="lp-footer w-full border-t border-white/5 relative z-10">
+        <div class="max-w-[1400px] mx-auto px-8 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
+            <p class="text-white/20 text-xs">&copy; 2026 SJ MovieRecommendation · Movie data by TMDB</p>
+            <nav class="flex items-center gap-6 text-xs">
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy</a>
+                <a href="#" class="text-white/30 hover:text-white/60 transition">Terms</a>
             </nav>
-            <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieRecommendation. Movie data by TMDB.</p>
         </div>
     </footer>
 
-
-    <!-- ═══ Auth Modal ═══════════════════════════════════════════ -->
-    <div id="auth-modal-overlay" class="glass-modal-overlay hidden">
-        <div class="glass-modal">
-            <div class="p-8">
-                <div class="flex justify-center mb-6">
-                    <div class="lp-logo-badge text-black font-bold text-2xl rounded-lg px-3 py-1">SJ</div>
-                </div>
-
-                <!-- Login Panel -->
-                <div data-auth-panel="login">
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Welcome Back</h2>
-                        <p class="text-sm text-white/40">Sign in to your account</p>
-                    </div>
-                    <p id="login-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
-                    <form id="auth-login-form" class="space-y-5">
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-envelope text-white/30 text-sm"></i></div>
-                                <input type="email" name="email" class="glass-input glass-input-icon" placeholder="Enter your email" required>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase">Password</label>
-                                <button type="button" onclick="Auth.showModal('forgot-password')" class="text-[11px] link-accent">Forgot Password?</button>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
-                                <input type="password" name="password" class="glass-input glass-input-icon" placeholder="••••••••" required>
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full lp-btn lp-btn-primary py-3 text-sm">Login</button>
-                    </form>
-                    <hr class="glass-divider">
-                    <p class="text-center text-sm text-white/40">New here? <button type="button" onclick="Auth.showModal('signup')" class="text-white font-semibold hover:underline">Create an account</button></p>
-                </div>
-
-                <!-- Signup Panel -->
-                <div data-auth-panel="signup" class="hidden">
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Create Account</h2>
-                        <p class="text-sm text-white/40">Join SJ MovieReview today</p>
-                    </div>
-                    <p id="signup-error" class="auth-error hidden text-xs text-red-400 mb-4 text-center"></p>
-                    <form id="auth-signup-form" class="space-y-4">
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Name</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-user text-white/30 text-sm"></i></div>
-                                <input type="text" name="name" class="glass-input glass-input-icon" placeholder="Your name" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-envelope text-white/30 text-sm"></i></div>
-                                <input type="email" name="email" class="glass-input glass-input-icon" placeholder="Enter your email" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Password</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
-                                <input type="password" name="password" class="glass-input glass-input-icon" placeholder="Create a password" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm Password</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-white/30 text-sm"></i></div>
-                                <input type="password" name="confirm_password" class="glass-input glass-input-icon" placeholder="Repeat your password" required>
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full lp-btn lp-btn-primary py-3 text-sm">Create Account</button>
-                    </form>
-                    <hr class="glass-divider">
-                    <p class="text-center text-sm text-white/40">Already have an account? <button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">Login</button></p>
-                </div>
-
-                <!-- Forgot Password Panel -->
-                <div data-auth-panel="forgot-password" class="hidden">
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl font-heading font-bold text-white mb-1">Reset Password</h2>
-                        <p class="text-sm text-white/40">We'll send you a reset link</p>
-                    </div>
-                    <form id="auth-forgot-form" class="space-y-5">
-                        <div>
-                            <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Email</label>
-                            <input type="email" name="email" class="glass-input" placeholder="Enter your email" required>
-                        </div>
-                        <button type="submit" class="w-full lp-btn lp-btn-primary py-3 text-sm">Send Reset Link</button>
-                    </form>
-                    <hr class="glass-divider">
-                    <p class="text-center text-sm text-white/40"><button type="button" onclick="Auth.showModal('login')" class="text-white font-semibold hover:underline">&larr; Back to Login</button></p>
-                </div>
-
-                <!-- Forgot Sent Panel -->
-                <div data-auth-panel="forgot-sent" class="hidden">
-                    <div class="text-center py-6">
-                        <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                            <i class="fa-solid fa-check text-emerald-400 text-2xl"></i>
-                        </div>
-                        <h2 class="text-xl font-heading font-bold text-white mb-2">Check Your Email</h2>
-                        <p class="text-sm text-white/40 max-w-xs mx-auto">If an account exists with that email, we've sent a password reset link.</p>
-                        <button type="button" onclick="Auth.hideModal()" class="lp-btn lp-btn-secondary mt-6 text-sm">Close</button>
-                    </div>
-                </div>
-
-                <!-- Close button -->
-                <button onclick="Auth.hideModal()" class="absolute top-4 right-4 text-white/30 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ Scripts ══════════════════════════════════════════════ -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        window.APP_CONFIG = {
-            API_BASE: 'http://localhost:8000',
-            TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905',
-            SUPABASE_URL: 'https://nwvvwghvdnbrltektuno.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53dnZ3Z2h2ZG5icmx0ZWt0dW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjQ2MDMsImV4cCI6MjA5NTIwMDYwM30.Brl67HzxcSoYrs9AtY8kVtofLLa0k9bJAdsmpIpb7Ns'
-        };
-    </script>
+    <script src="Static/js/config.js"></script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>

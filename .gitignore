@@ -39,3 +39,7 @@ htmlcov/
 # Local SQLite dev database
 database.db
 *.db
+
+# Redis dumps
+*.rdb
+dump.rdb
