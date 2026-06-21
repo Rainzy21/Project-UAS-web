@@ -114,9 +114,9 @@ Issues are grouped by audit dimension. Each entry includes **location**, **sever
 | **Location** | [`frontend/Static/js/config.js`](../frontend/Static/js/config.js) lines 5–8 (file is **git-tracked**) |
 | **Description** | Production-like credentials are hardcoded and committed: |
 | | ```javascript |
-| | TMDB_API_KEY: '0d07ead93082f0dd1514a2e777e28905', |
-| | SUPABASE_URL: 'https://fyogufwysrxbgdgqzdqt.supabase.co', |
-| | SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', |
+| | TMDB_API_KEY: '<redacted — was committed in config.js>', |
+| | SUPABASE_URL: 'https://<project-ref>.supabase.co', |
+| | SUPABASE_ANON_KEY: '<redacted — JWT anon key>', |
 | | ``` |
 | | Anyone with repo access (or if pushed to GitHub) can extract keys. TMDB key can be abused for quota exhaustion. Supabase anon key is expected in frontend but must be paired with strict RLS — combined with SEC-06 this is worse. |
 | **Fix** | 1) **Rotate TMDB key immediately** in TMDB dashboard. 2) Replace tracked file with placeholders and inject at deploy time:
@@ -422,7 +422,7 @@ async def security_headers(request, call_next):
 |---|---|
 | **Severity** | **low** |
 | **Location** | [`scripts/apply_supabase_schema.sh`](../scripts/apply_supabase_schema.sh) line 7 |
-| **Description** | `PROJECT_REF="fyogufwysrxbgdgqzdqt"` is hardcoded. Wrong project if env differs; couples script to one tenant. |
+| **Description** | `PROJECT_REF="<hardcoded-ref>"` was hardcoded (since fixed). Wrong project if env differs; couples script to one tenant. |
 | **Fix** | Read project ref from `.env` (`SUPABASE_URL` parse) or require `SUPABASE_PROJECT_REF` env var. |
 
 ---
