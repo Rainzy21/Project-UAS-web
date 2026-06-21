@@ -1,92 +1,176 @@
-# Project UAS - MovieReview (AI Movie Recommendation)
+# SJ MovieReview — AI Movie Recommendations
 
-Proyek ini menggunakan arsitektur modern dengan **FastAPI (Python)** sebagai Backend dan **Vanilla JS / HTML / Tailwind CSS** sebagai Frontend.
+A full-stack movie recommendation app: **FastAPI** backend, **static HTML/JS/Tailwind** frontend, **Supabase** auth & database, **TMDB** metadata, and **Gemini/DeepSeek** for AI picks.
 
-## Persyaratan (Prerequisites)
+| Layer | Stack |
+|-------|--------|
+| Backend | FastAPI, Redis rate limiting, optional Sentry |
+| Frontend | Vanilla JS, Supabase Auth (PKCE), Tailwind CDN |
+| Data | Supabase Postgres + RLS |
+| Deploy | Docker, Render blueprint, nginx (see docs) |
 
-- Python 3.10+ (sudah terinstal dan ada di PATH)
-- Akun Supabase (untuk Database & Auth)
-- API Keys (DeepSeek AI & TMDB)
-- Redis (for production rate limiting; optional for local dev via docker-compose)
+---
 
-### Frontend config (required)
+## Prerequisites
 
-`frontend/Static/js/config.js` is **gitignored** and must be created locally:
+- **Python 3.12+** (matches CI)
+- **Node.js 24+** (frontend utils tests in CI; optional locally)
+- **Supabase** project (auth + database)
+- **API keys:** TMDB, Gemini and/or DeepSeek
+- **Redis** — optional locally; required for production rate limits (`docker compose up redis`)
+
+---
+
+## Quick start (local)
+
+### 1. Clone and configure
 
 ```bash
+cp .env.example .env
+# Edit .env — Supabase, TMDB, AI keys, FRONTEND_URL=http://localhost:5500
+
 cp frontend/Static/js/config.example.js frontend/Static/js/config.js
+# Edit config.js — SUPABASE_URL, SUPABASE_ANON_KEY (API_BASE defaults to localhost:8000)
 ```
 
-Edit `config.js` with your Supabase URL and anon key (from `.env`). TMDB calls are proxied through the backend — no TMDB key in the frontend.
+Apply the database schema once:
 
-For production deploy, use `scripts/inject-config.sh` to substitute placeholders, or serve via nginx with same-origin `/api` proxy.
+```bash
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/apply_supabase_schema.sh
+```
 
-**Production (Render + Supabase):** see [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
+### 2. Backend (terminal 1)
 
----
-
-## 🚀 Cara Menjalankan Proyek (Local Development)
-
-Untuk menjalankan aplikasi ini secara lokal, Anda perlu menjalankan Backend dan Frontend secara bersamaan di dua terminal yang berbeda.
-
-### 1. Menjalankan Backend (Terminal 1)
-
-Backend dibangun menggunakan FastAPI. Ikuti langkah-langkah berikut di terminal pertama:
-
-**Langkah-langkah (Windows):**
-```powershell
-# 1. Masuk ke direktori backend
+```bash
 cd backend
-
-# 2. Buat virtual environment (jika belum ada)
-python -m venv .venv
-
-# 3. Aktifkan virtual environment
-# Jika menggunakan PowerShell:
-.\.venv\Scripts\Activate.ps1
-# Jika menggunakan Command Prompt (CMD):
-.\.venv\Scripts\activate
-
-# 4. Instal semua dependensi yang dibutuhkan
-pip install -r requirements.txt
-
-# 5. Jalankan server FastAPI menggunakan Uvicorn
+python3.12 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.lock
 uvicorn app.main:app --reload --port 8000
 ```
-*Backend API akan berjalan di: `http://localhost:8000`*
-*Dokumentasi API (Swagger UI) dapat diakses di: `http://localhost:8000/docs`*
 
+- API: http://localhost:8000  
+- Swagger (dev only): http://localhost:8000/docs  
+- Health: http://localhost:8000/health  
 
-### 2. Menjalankan Frontend (Terminal 2)
+### 3. Frontend (terminal 2)
 
-Frontend terdiri dari file HTML, CSS, dan JavaScript statis. Ada beberapa cara untuk menjalankannya:
+Use **Live Server** on `frontend/index.html` (port **5500**), or:
 
-**Cara A: Menggunakan ekstensi "Live Server" di VS Code (Sangat Disarankan)**
-1. Buka folder root proyek (`Project-UAS-web`) atau langsung buka folder `frontend` di VS Code.
-2. Buka folder `frontend`, lalu cari file `index.html`.
-3. Klik kanan pada file `index.html` dan pilih **"Open with Live Server"**.
-4. Browser akan otomatis terbuka dan menampilkan web app Anda.
-
-**Cara B: Menggunakan HTTP Server bawaan Python (Alternatif)**
-Buka terminal kedua dan jalankan perintah berikut:
-```powershell
-# 1. Masuk ke direktori frontend
-cd frontend
-
-# 2. Jalankan server statis menggunakan Python
-python -m http.server 5500
+```bash
+cd frontend && python -m http.server 5500
 ```
-*Buka browser dan akses: `http://localhost:5500`*
+
+Open http://localhost:5500 — use `localhost`, not `127.0.0.1` (OAuth PKCE).
+
+### 4. Redis (optional locally)
+
+Rate limits use Redis in production. For local testing:
+
+```bash
+docker compose up redis -d
+# REDIS_URL=redis://localhost:6379 in .env
+```
+
+Or run the full stack:
+
+```bash
+docker compose up --build
+```
 
 ---
 
-## Troubleshooting Umum
+## Environment variables
 
-- **`ImportError` atau "Module not found" saat menjalankan backend:**
-  Pastikan virtual environment (`.venv`) sudah aktif (biasanya ditandai dengan tulisan `(.venv)` di awal baris terminal) sebelum menjalankan `pip install` dan perintah `uvicorn`.
+Copy from [`.env.example`](.env.example). Key values:
 
-- **CORS Error saat frontend mencoba memanggil API backend:**
-  Pastikan backend berjalan di port `8000` dan pastikan file JavaScript di frontend sudah menunjuk URL yang benar ke `http://localhost:8000`.
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_*` | Auth + database (service role **backend only**) |
+| `TMDB_API_KEY` | Movie metadata (backend only — not in frontend) |
+| `GEMINI_API_KEY` / `DEEPSEEK_API_KEY` | AI recommendations |
+| `REDIS_URL` | Rate limiting |
+| `FRONTEND_URL` | CORS origin (e.g. `http://localhost:5500`) |
+| `ENVIRONMENT` | `development` \| `staging` \| `production` |
+| `SENTRY_DSN` | Optional error tracking |
 
-- **Fitur rekomendasi atau autentikasi error / tidak bekerja:**
-  Pastikan file `.env` di folder root atau `backend` sudah diatur dengan benar (berisi kredensial Supabase, TMDB API Key, dan AI API Key). Anda bisa menjadikan file `.env.example` sebagai referensi struktur key-nya.
+**Never commit** `.env` or `frontend/Static/js/config.js`.
+
+---
+
+## Testing & CI
+
+```bash
+# Backend (from repo root)
+pip install -r backend/requirements.lock
+pytest tests/ -v
+
+# Frontend utils
+node frontend/Static/js/utils.test.js
+
+# Lint
+ruff check backend/app tests
+pip-audit -r backend/requirements.lock
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs ruff, pytest, pip-audit, gitleaks, and frontend tests on push/PR.
+
+---
+
+## Deployment
+
+| Guide | Use when |
+|-------|----------|
+| [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md) | Deploy to Render + Supabase (recommended) |
+| [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md) | Pre-go-live checklist (secrets, schema, TLS, pg_cron) |
+| [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) | Security findings and remediation status |
+
+Production frontend config:
+
+```bash
+API_BASE=/api SUPABASE_URL=... SUPABASE_ANON_KEY=... ./scripts/inject-config.sh
+```
+
+Or use `scripts/render-build-frontend.sh` on Render static sites.
+
+---
+
+## Project layout
+
+```
+backend/app/          FastAPI app (routers, services, auth, Redis)
+frontend/             Static HTML pages + Static/js/
+scripts/              Schema apply, config inject, Render build
+supabase_migrations/  RLS lockdown, retention cleanup (pg_cron)
+tests/                Pytest (auth, export, deletion, rate limits)
+deploy/nginx.conf     Production TLS + API proxy reference
+docker-compose.yml    Backend + Redis
+render.yaml           Render blueprint
+```
+
+---
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| `Module not found` (backend) | Activate `.venv`; install from `requirements.lock` |
+| CORS errors | Backend on `:8000`; `FRONTEND_URL` matches frontend origin |
+| Auth / OAuth fails | Use `localhost` not `127.0.0.1`; add redirect URLs in Supabase Dashboard |
+| Empty recommendation history | Run `./scripts/apply_supabase_schema.sh` |
+| Rate limit / Redis errors | Start Redis or set `REDIS_URL` |
+| Recommendations 403 | Verify email in Supabase (required for `/generate`) |
+
+---
+
+## Security notes
+
+- `config.js` is **gitignored** — use `config.example.js` locally; inject at deploy.
+- If API keys were ever committed, **rotate** them and consider scrubbing git history.
+- See [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for the full audit and operator checklist.
+
+---
+
+## License
+
+Academic / project use — see course requirements for your institution.
