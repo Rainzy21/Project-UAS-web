@@ -1,7 +1,5 @@
 /**
  * history.js — Recommendation History Page
- *
- * Loads past recommendation sessions, expandable to show movies.
  */
 (function () {
     document.addEventListener('DOMContentLoaded', async () => {
@@ -9,7 +7,8 @@
         const emptyState = document.getElementById('history-empty');
         if (!list) return;
 
-        // Auth guard
+        const U = window.AppUtils;
+
         if (!window.Auth || !(await window.Auth.isLoggedIn())) {
             window.location.href = '/?auth=required';
             return;
@@ -17,6 +16,24 @@
 
         let page = 1;
         const limit = 20;
+
+        function showError(msg) {
+            list.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'text-center text-white/40 py-12';
+            p.textContent = msg;
+            list.appendChild(p);
+        }
+
+        function createPill(iconClass, text) {
+            const span = document.createElement('span');
+            span.className = 'glass-pill';
+            const icon = document.createElement('i');
+            icon.className = iconClass + ' text-[10px]';
+            span.appendChild(icon);
+            span.appendChild(document.createTextNode(' ' + text));
+            return span;
+        }
 
         async function loadHistory() {
             list.innerHTML = '';
@@ -32,7 +49,7 @@
                 const sessions = data.items || data.sessions || (Array.isArray(data) ? data : []);
                 renderHistory(sessions);
             } catch (err) {
-                list.innerHTML = `<p class="text-center text-white/40 py-12">${err.message || 'Failed to load history.'}</p>`;
+                showError(err.message || 'Failed to load history.');
             }
         }
 
@@ -56,29 +73,38 @@
                 const prefs = s.preferences || {};
                 const movieCount = s.movie_count || (s.movies ? s.movies.length : 0);
 
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-sm text-white/60">${date}</span>
-                        <span class="text-xs text-white/40">${movieCount} movies</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        ${prefs.genre ? `<span class="glass-pill"><i class="fa-solid fa-film text-[10px]"></i> ${escapeHtml(prefs.genre)}</span>` : ''}
-                        ${prefs.mood ? `<span class="glass-pill"><i class="fa-solid fa-masks-theater text-[10px]"></i> ${escapeHtml(prefs.mood)}</span>` : ''}
-                        ${prefs.era ? `<span class="glass-pill"><i class="fa-solid fa-calendar text-[10px]"></i> ${escapeHtml(prefs.era)}</span>` : ''}
-                        ${prefs.language ? `<span class="glass-pill"><i class="fa-solid fa-globe text-[10px]"></i> ${escapeHtml(prefs.language)}</span>` : ''}
-                        ${prefs.watching_with ? `<span class="glass-pill"><i class="fa-solid fa-users text-[10px]"></i> ${escapeHtml(prefs.watching_with)}</span>` : ''}
-                    </div>
-                    <div class="history-movies hidden mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
-                    <button class="expand-btn text-xs text-white/30 hover:text-[#e50000] transition mt-2 flex items-center gap-1">
-                        <i class="fa-solid fa-chevron-down text-[10px]"></i> Show movies
-                    </button>
-                `;
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-start mb-3';
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'text-sm text-white/60';
+                dateSpan.textContent = date;
+                const countSpan = document.createElement('span');
+                countSpan.className = 'text-xs text-white/40';
+                countSpan.textContent = `${movieCount} movies`;
+                header.appendChild(dateSpan);
+                header.appendChild(countSpan);
+                card.appendChild(header);
 
-                // Expand
-                const expandBtn = card.querySelector('.expand-btn');
-                const moviesGrid = card.querySelector('.history-movies');
+                const pills = document.createElement('div');
+                pills.className = 'flex flex-wrap gap-2 mb-3';
+                if (prefs.genre) pills.appendChild(createPill('fa-solid fa-film', prefs.genre));
+                if (prefs.mood) pills.appendChild(createPill('fa-solid fa-masks-theater', prefs.mood));
+                if (prefs.era) pills.appendChild(createPill('fa-solid fa-calendar', prefs.era));
+                if (prefs.language) pills.appendChild(createPill('fa-solid fa-globe', prefs.language));
+                if (prefs.watching_with) pills.appendChild(createPill('fa-solid fa-users', prefs.watching_with));
+                card.appendChild(pills);
+
+                const moviesGrid = document.createElement('div');
+                moviesGrid.className = 'history-movies hidden mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3';
+                card.appendChild(moviesGrid);
+
+                const expandBtn = document.createElement('button');
+                expandBtn.type = 'button';
+                expandBtn.className = 'expand-btn text-xs text-white/30 hover:text-[#e50000] transition mt-2 flex items-center gap-1';
+                expandBtn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i> Show movies';
+                card.appendChild(expandBtn);
+
                 let expanded = false;
-
                 expandBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     expanded = !expanded;
@@ -91,16 +117,30 @@
                         s.movies.forEach(m => {
                             const mini = document.createElement('div');
                             mini.className = 'glass-card flex flex-col cursor-pointer';
-                            mini.innerHTML = `
-                                <div class="aspect-[2/3] overflow-hidden bg-gray-900">
-                                    ${m.poster_url ? `<img src="${m.poster_url}" alt="${escapeHtml(m.title)}" class="w-full h-full object-cover" loading="lazy">` : ''}
-                                </div>
-                                <div class="p-2">
-                                    <p class="text-xs truncate text-white/70">${escapeHtml(m.title)}</p>
-                                </div>
-                            `;
+
+                            const aspect = document.createElement('div');
+                            aspect.className = 'aspect-[2/3] overflow-hidden bg-gray-900';
+                            const posterSrc = U.safePosterUrl(m.poster_url);
+                            if (posterSrc) {
+                                const img = document.createElement('img');
+                                img.src = posterSrc;
+                                img.alt = m.title || '';
+                                img.className = 'w-full h-full object-cover';
+                                img.loading = 'lazy';
+                                aspect.appendChild(img);
+                            }
+                            mini.appendChild(aspect);
+
+                            const body = document.createElement('div');
+                            body.className = 'p-2';
+                            const titleP = document.createElement('p');
+                            titleP.className = 'text-xs truncate text-white/70';
+                            titleP.textContent = m.title || '';
+                            body.appendChild(titleP);
+                            mini.appendChild(body);
+
                             mini.addEventListener('click', () => {
-                                window.location.href = `detail.html?id=${m.tmdb_id}`;
+                                window.location.href = `detail.html?id=${encodeURIComponent(Number(m.tmdb_id))}`;
                             });
                             moviesGrid.appendChild(mini);
                         });
@@ -109,10 +149,6 @@
 
                 list.appendChild(card);
             });
-        }
-
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
         loadHistory();

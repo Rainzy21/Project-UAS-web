@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' https://image.tmdb.org data:; connect-src 'self' https://*.supabase.co http://localhost:8000; frame-ancestors 'none'; base-uri 'self';">
     <title>Profile · SJ MovieReview</title>
     <meta name="description" content="Manage your SJ MovieReview profile, change password, and account settings.">
     <script src="Static/js/origin-guard.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="stylesheet" href="Static/css/style.css">
     <link rel="stylesheet" href="Static/css/landing.css">
 </head>
@@ -134,15 +135,15 @@
             <form id="change-password-form" class="space-y-4 max-w-md">
                 <div>
                     <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Current Password</label>
-                    <input type="password" name="current_password" class="glass-input" placeholder="Enter current password" required>
+                    <input type="password" name="current_password" class="glass-input" placeholder="Enter current password" required maxlength="128">
                 </div>
                 <div>
                     <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">New Password</label>
-                    <input type="password" name="new_password" class="glass-input" placeholder="Enter new password" required>
+                    <input type="password" name="new_password" class="glass-input" placeholder="Enter new password" required maxlength="128">
                 </div>
                 <div>
                     <label class="block text-[11px] font-medium text-white/40 tracking-wider uppercase mb-2">Confirm New Password</label>
-                    <input type="password" name="confirm_password" class="glass-input" placeholder="Repeat new password" required>
+                    <input type="password" name="confirm_password" class="glass-input" placeholder="Repeat new password" required maxlength="128">
                 </div>
                 <button type="submit" class="glass-btn glass-btn-primary text-sm px-6 py-2.5 mt-2">Update Password</button>
             </form>
@@ -174,7 +175,7 @@
                 </div>
                 <h2 class="text-xl font-heading font-bold mb-2">Delete Account?</h2>
                 <p id="delete-modal-desc" class="text-white/40 text-sm mb-6">This will permanently delete your account and all saved movies.</p>
-                <input id="delete-password" type="password" class="glass-input mb-4 hidden" placeholder="Enter your password">
+                <input id="delete-password" type="password" class="glass-input mb-4 hidden" placeholder="Enter your password" maxlength="128">
                 <div class="flex gap-3 justify-center">
                     <button id="delete-cancel" class="glass-btn glass-btn-secondary text-sm px-5 py-2.5">Cancel</button>
                     <button id="delete-confirm" class="glass-btn glass-btn-danger text-sm px-5 py-2.5">Delete Forever</button>
@@ -187,7 +188,7 @@
     <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
         <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <nav class="flex items-center gap-8 text-sm">
-                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="privacy.html" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
                 <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
             </nav>
             <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview.</p>
@@ -195,8 +196,9 @@
     </footer>
 
     <!-- Supabase JS client (must load FIRST) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js" integrity="sha384-z2hqtpr/vSDZ8zSjLOiNgnR/mpU799AD93s6rvkNJLI6Hl0YlKXEhDtREzNT749S" crossorigin="anonymous"></script>
     <script src="Static/js/config.js"></script>
+    <script src="Static/js/utils.js"></script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>

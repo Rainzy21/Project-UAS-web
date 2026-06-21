@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Apply supabase_schema.sql to your remote Supabase project.
+# Apply Supabase schema migrations in order.
 # Requires: psql, SUPABASE_DB_PASSWORD in environment (or .env at repo root).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_REF="fyogufwysrxbgdgqzdqt"
 
 if [[ -f "$ROOT/.env" ]]; then
   set -a
@@ -13,15 +12,37 @@ if [[ -f "$ROOT/.env" ]]; then
   set +a
 fi
 
+if [[ -z "${SUPABASE_URL:-}" ]]; then
+  echo "Set SUPABASE_URL in .env (e.g. https://your-project.supabase.co)"
+  exit 1
+fi
+
+PROJECT_REF="${SUPABASE_PROJECT_REF:-}"
+if [[ -z "$PROJECT_REF" ]]; then
+  PROJECT_REF="$(echo "$SUPABASE_URL" | sed -E 's|https?://([^.]+)\.supabase\.co.*|\1|')"
+fi
+
 if [[ -z "${SUPABASE_DB_PASSWORD:-}" ]]; then
   echo "Set SUPABASE_DB_PASSWORD (Supabase Dashboard → Project Settings → Database → password), then rerun:"
   echo "  SUPABASE_DB_PASSWORD='your-db-password' ./scripts/apply_supabase_schema.sh"
   exit 1
 fi
 
-export PGPASSWORD="$SUPABASE_DB_PASSWORD"
-psql \
-  "host=db.${PROJECT_REF}.supabase.co port=5432 dbname=postgres user=postgres sslmode=require" \
-  -f "$ROOT/supabase_schema.sql"
+SQL_FILES=(
+  "$ROOT/supabase_schema.sql"
+  "$ROOT/supabase_fix_wishlist.sql"
+  "$ROOT/supabase_migrations/002_movies_rls_lockdown.sql"
+  "$ROOT/supabase_migrations/003_retention_cleanup.sql"
+)
 
-echo "Schema applied. PostgREST cache reload was included in the SQL."
+export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+CONN="host=db.${PROJECT_REF}.supabase.co port=5432 dbname=postgres user=postgres sslmode=require"
+
+for f in "${SQL_FILES[@]}"; do
+  if [[ -f "$f" ]]; then
+    echo "Applying $(basename "$f")..."
+    psql "$CONN" -f "$f"
+  fi
+done
+
+echo "Schema applied (project ref: ${PROJECT_REF})."

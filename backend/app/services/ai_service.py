@@ -341,7 +341,6 @@ async def get_recommendations(preferences: dict) -> list[dict]:
     ]
 
     content: str = ""
-    last_error: Exception | None = None
 
     # ── 1. Try Gemini first ───────────────────────────────────────────────
     if settings.GEMINI_API_KEY:
@@ -349,9 +348,8 @@ async def get_recommendations(preferences: dict) -> list[dict]:
             content = await _call_gemini_native(settings.GEMINI_API_KEY, messages)
         except Exception as exc:
             logger.warning("Gemini failed (%s), falling back to DeepSeek.", exc)
-            last_error = exc
     else:
-        last_error = Exception("GEMINI_API_KEY not configured")
+        logger.warning("GEMINI_API_KEY not configured; falling back to DeepSeek.")
 
     # ── 2. Fallback: DeepSeek / OpenRouter ────────────────────────────────
     if not content:
@@ -366,21 +364,22 @@ async def get_recommendations(preferences: dict) -> list[dict]:
             )
             content = await _call_ai(deepseek, model_name, messages)
         except Exception as exc:
-            detail = f"Both AI providers failed. Gemini: {last_error}; DeepSeek: {exc}"
+            logger.exception("DeepSeek AI provider failed")
             raise HTTPException(
                 status_code=502,
-                detail={"error": True, "code": "AI_ERROR", "message": detail, "status": 502},
+                detail={"error": True, "code": "AI_ERROR", "message": "AI service unavailable", "status": 502},
             ) from exc
 
     try:
         raw_list = _parse_ai_content(content)
     except Exception as exc:
+        logger.exception("Failed to parse AI response")
         raise HTTPException(
             status_code=502,
             detail={
                 "error": True,
                 "code": "AI_ERROR",
-                "message": f"Failed to parse AI response. Raw output: {content[:200]}...",
+                "message": "Failed to parse AI response",
                 "status": 502,
             },
         ) from exc

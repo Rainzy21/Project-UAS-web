@@ -1,26 +1,30 @@
 """Users router — /api/users/me endpoints for profile management."""
 import asyncio
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
-from app.core.auth import get_user_id_from_request
-from app.core.supabase_client import supabase_admin, supabase_anon
+from pydantic import BaseModel, Field
+
+from app.core.auth import get_auth_from_request, get_user_id_from_request
+from app.core.supabase_client import get_user_client, supabase_admin, supabase_anon
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 class UpdateNameBody(BaseModel):
-    name: str
+    name: str = Field(..., max_length=100)
 
 
 class ChangePasswordBody(BaseModel):
-    current_password: str
-    new_password: str
+    current_password: str = Field(..., max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class DeleteAccountBody(BaseModel):
-    current_password: Optional[str] = None
+    current_password: Optional[str] = Field(None, max_length=128)
 
 
 def _get_providers(user) -> list[str]:
@@ -52,6 +56,7 @@ async def _fetch_user(user_id: str):
 
 
 async def _verify_current_password(email: str, password: str) -> None:
+    # Creates a real Supabase session via sign_in_with_password; session is discarded.
     if not supabase_anon:
         raise HTTPException(status_code=503, detail="Password verification unavailable")
     try:
@@ -69,10 +74,8 @@ async def _verify_current_password(email: str, password: str) -> None:
         raise HTTPException(status_code=401, detail="Current password is incorrect")
 
 
-# ── GET /api/users/me ─────────────────────────────────────────────────────────
 @router.get("/me")
 async def get_me(request: Request):
-    """Return current user's profile. Allows unverified email."""
     user_id = await get_user_id_from_request(request, require_verified=False)
 
     try:
@@ -97,20 +100,53 @@ async def get_me(request: Request):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch user: {exc}")
+        logger.exception("Failed to fetch user profile")
+        raise HTTPException(status_code=502, detail="Failed to fetch user profile") from exc
 
 
-# ── PATCH /api/users/me ───────────────────────────────────────────────────────
+@router.get("/me/export")
+async def export_my_data(request: Request):
+    """GDPR-style data export: profile, saved movies, logs, presets."""
+    user_id, token = await get_auth_from_request(request, require_verified=True)
+    sb = get_user_client(token)
+
+    user = await _fetch_user(user_id)
+    meta = user.user_metadata or {}
+
+    saved = await asyncio.get_running_loop().run_in_executor(
+        None,
+        lambda: sb.table("saved_movies").select("*").eq("user_id", user_id).execute(),
+    )
+    logs = await asyncio.get_running_loop().run_in_executor(
+        None,
+        lambda: sb.table("recommendation_logs").select("*").eq("user_id", user_id).execute(),
+    )
+    presets = await asyncio.get_running_loop().run_in_executor(
+        None,
+        lambda: sb.table("preference_presets").select("*").eq("user_id", user_id).execute(),
+    )
+
+    return {
+        "profile": {
+            "id": user.id,
+            "email": user.email,
+            "name": meta.get("full_name") or meta.get("name"),
+            "email_verified": user.email_confirmed_at is not None,
+            "created_at": str(user.created_at) if user.created_at else None,
+        },
+        "saved_movies": saved.data or [],
+        "recommendation_logs": logs.data or [],
+        "preference_presets": presets.data or [],
+    }
+
+
 @router.patch("/me")
 async def update_name(request: Request, body: UpdateNameBody):
-    """Update the current user's display name."""
     user_id = await get_user_id_from_request(request, require_verified=False)
 
     name = body.name.strip()
     if not name:
         raise HTTPException(status_code=422, detail="Name cannot be empty")
-    if len(name) > 100:
-        raise HTTPException(status_code=422, detail="Name too long (max 100 chars)")
 
     try:
         await asyncio.get_running_loop().run_in_executor(
@@ -124,18 +160,13 @@ async def update_name(request: Request, body: UpdateNameBody):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to update name: {exc}")
+        logger.exception("Failed to update name")
+        raise HTTPException(status_code=502, detail="Failed to update name") from exc
 
 
-# ── PATCH /api/users/me/password ─────────────────────────────────────────────
 @router.patch("/me/password")
 async def change_password(request: Request, body: ChangePasswordBody):
-    """Change the current user's password (email/password accounts only)."""
-    user_id = await get_user_id_from_request(request, require_verified=False)
-
-    new_pw = body.new_password
-    if len(new_pw) < 6:
-        raise HTTPException(status_code=422, detail="Password must be at least 6 characters")
+    user_id = await get_user_id_from_request(request, require_verified=True)
 
     try:
         user = await _fetch_user(user_id)
@@ -153,21 +184,29 @@ async def change_password(request: Request, body: ChangePasswordBody):
             None,
             lambda: supabase_admin.auth.admin.update_user_by_id(
                 user_id,
-                {"password": new_pw},
+                {"password": body.new_password},
             ),
         )
+
+        try:
+            await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: supabase_admin.auth.admin.sign_out(user_id, "others"),
+            )
+        except Exception as exc:
+            logger.warning("Session revocation after password change failed: %s", exc)
+
         return {"success": True}
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to change password: {exc}")
+        logger.exception("Failed to change password")
+        raise HTTPException(status_code=502, detail="Failed to change password") from exc
 
 
-# ── DELETE /api/users/me ──────────────────────────────────────────────────────
 @router.delete("/me")
 async def delete_account(request: Request, body: DeleteAccountBody):
-    """Permanently delete the user's account."""
-    user_id = await get_user_id_from_request(request, require_verified=False)
+    user_id = await get_user_id_from_request(request, require_verified=True)
 
     try:
         user = await _fetch_user(user_id)
@@ -186,4 +225,5 @@ async def delete_account(request: Request, body: DeleteAccountBody):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to delete account: {exc}")
+        logger.exception("Failed to delete account")
+        raise HTTPException(status_code=502, detail="Failed to delete account") from exc

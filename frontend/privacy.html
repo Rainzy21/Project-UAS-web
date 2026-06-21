@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' https://image.tmdb.org data:; connect-src 'self' https://*.supabase.co http://localhost:8000; frame-ancestors 'none'; base-uri 'self';">
+    <title>Privacy Policy · SJ MovieReview</title>
+    <script src="Static/js/origin-guard.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
+    <link rel="stylesheet" href="Static/css/style.css">
+</head>
+<body>
+    <nav id="main-nav" class="glass-nav fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center">
+        <a href="index.html" class="text-xl font-bold text-white">SJ MovieReview</a>
+        <a href="index.html" class="text-sm text-white/60 hover:text-white">← Home</a>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-6 pt-28 pb-16 text-white/80 prose prose-invert">
+        <h1 class="text-3xl font-bold text-white mb-6">Privacy Policy</h1>
+        <p class="mb-4">Last updated: June 2026</p>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">What we collect</h2>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>Account information (email, display name) via Supabase Auth</li>
+            <li>Saved movies, preference presets, and AI recommendation history</li>
+            <li>Usage data required to operate the service (rate limits, logs)</li>
+        </ul>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">Subprocessors</h2>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li><strong>Supabase</strong> — authentication and database hosting</li>
+            <li><strong>Google (Gemini)</strong> — AI movie recommendations</li>
+            <li><strong>DeepSeek</strong> — AI fallback for recommendations</li>
+            <li><strong>TMDB</strong> — movie metadata and posters</li>
+        </ul>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">Data retention</h2>
+        <p class="mb-4">Recommendation logs are retained for up to 12 months, then eligible for deletion. You may delete your account at any time from your profile page.</p>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">Account deletion</h2>
+        <p class="mb-4">Deleting your account removes your profile, saved movies, recommendation history, and presets from our application database. Provider backups may retain data for a limited period per Supabase policies.</p>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">Data export</h2>
+        <p class="mb-4">Authenticated users can export their data via <code>GET /api/users/me/export</code> (JSON download from profile tools or API client).</p>
+
+        <h2 class="text-xl font-semibold text-white mt-8 mb-3">Contact</h2>
+        <p>For privacy requests, contact the site operator listed in the project README.</p>
+    </main>
+</body>
+</html>

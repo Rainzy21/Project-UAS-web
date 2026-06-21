@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; base-uri 'self';">
     <title>Signing in… · SJ MovieReview</title>
     <script src="Static/js/origin-guard.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="stylesheet" href="Static/css/style.css">
     <style>
         .auth-callback-page {
@@ -42,8 +43,9 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js" integrity="sha384-z2hqtpr/vSDZ8zSjLOiNgnR/mpU799AD93s6rvkNJLI6Hl0YlKXEhDtREzNT749S" crossorigin="anonymous"></script>
     <script src="Static/js/config.js"></script>
+    <script src="Static/js/utils.js"></script>
     <script src="Static/js/auth.js"></script>
     <script>
         (async function () {
@@ -88,8 +90,11 @@
                     fail('No session found. Try again.');
                     return;
                 }
-                const redirect = sessionStorage.getItem('postAuthRedirect') || '/';
+                const redirect = (window.AppUtils && window.AppUtils.safeRedirectPath(
+                    sessionStorage.getItem('postAuthRedirect')
+                )) || '/';
                 sessionStorage.removeItem('postAuthRedirect');
+                history.replaceState(null, '', location.pathname + location.search);
                 window.location.replace(redirect);
                 return;
             }
@@ -111,8 +116,11 @@
                 return;
             }
 
-            const redirect = sessionStorage.getItem('postAuthRedirect') || '/';
+            const redirect = (window.AppUtils && window.AppUtils.safeRedirectPath(
+                sessionStorage.getItem('postAuthRedirect')
+            )) || '/';
             sessionStorage.removeItem('postAuthRedirect');
+            history.replaceState(null, '', location.pathname + location.search);
             window.location.replace(redirect);
         })();
     </script>

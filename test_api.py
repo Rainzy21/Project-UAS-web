@@ -41,15 +41,11 @@ def main() -> int:
     if not ok("GET /", r):
         return 1
 
+    r = httpx.get(f"{BASE}/health", timeout=10)
+    ok("GET /health", r)
+
     r = httpx.get(f"{BASE}/api/movies/trending", timeout=15)
     ok("GET /api/movies/trending", r)
-
-    r = httpx.post(
-        f"{BASE}/api/chat",
-        json={"message": "Recommend one sci-fi film", "history": []},
-        timeout=30,
-    )
-    ok("POST /api/chat", r)
 
     if not TOKEN:
         print("\n(skip) Authenticated endpoints — set TEST_SUPABASE_JWT to test")

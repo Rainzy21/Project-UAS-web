@@ -7,6 +7,21 @@ Proyek ini menggunakan arsitektur modern dengan **FastAPI (Python)** sebagai Bac
 - Python 3.10+ (sudah terinstal dan ada di PATH)
 - Akun Supabase (untuk Database & Auth)
 - API Keys (DeepSeek AI & TMDB)
+- Redis (for production rate limiting; optional for local dev via docker-compose)
+
+### Frontend config (required)
+
+`frontend/Static/js/config.js` is **gitignored** and must be created locally:
+
+```bash
+cp frontend/Static/js/config.example.js frontend/Static/js/config.js
+```
+
+Edit `config.js` with your Supabase URL and anon key (from `.env`). TMDB calls are proxied through the backend — no TMDB key in the frontend.
+
+For production deploy, use `scripts/inject-config.sh` to substitute placeholders, or serve via nginx with same-origin `/api` proxy.
+
+**Production (Render + Supabase):** see [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
 
 ---
 

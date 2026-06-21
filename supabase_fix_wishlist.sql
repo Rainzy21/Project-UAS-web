@@ -25,25 +25,4 @@ BEGIN
 END;
 $$;
 
--- Setelah membuat function, reload schema cache PostgREST:
 NOTIFY pgrst, 'reload schema';
-
-
--- ── OPSI B (lebih mudah): Tambah RLS policy di tabel movies ─
--- Jalankan ini JIKA tidak mau pakai RPC function.
--- Ini mengizinkan user yang login untuk insert/upsert movie.
-
-ALTER TABLE public.movies ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow authenticated insert on movies"
-ON public.movies
-FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated update on movies"
-ON public.movies
-FOR UPDATE
-TO authenticated
-USING (true)
-WITH CHECK (true);

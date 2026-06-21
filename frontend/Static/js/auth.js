@@ -28,7 +28,7 @@
                     </div>
                     <div class="auth-field">
                         <label for="login-password">Password</label>
-                        <input id="login-password" type="password" class="glass-input" placeholder="Enter your password" autocomplete="current-password" required>
+                        <input id="login-password" type="password" class="glass-input" placeholder="Enter your password" autocomplete="current-password" required maxlength="128">
                     </div>
                     <p class="auth-forgot-link"><button type="button" class="auth-link-btn" data-auth-switch="forgot">Forgot password?</button></p>
                     <button type="submit" class="auth-submit-btn">Sign in</button>
@@ -63,11 +63,11 @@
                     </div>
                     <div class="auth-field">
                         <label for="signup-password">Password</label>
-                        <input id="signup-password" type="password" class="glass-input" placeholder="Create a password" autocomplete="new-password" required>
+                        <input id="signup-password" type="password" class="glass-input" placeholder="Create a password" autocomplete="new-password" required maxlength="128">
                     </div>
                     <div class="auth-field">
                         <label for="signup-confirm">Confirm password</label>
-                        <input id="signup-confirm" type="password" class="glass-input" placeholder="Repeat your password" autocomplete="new-password" required>
+                        <input id="signup-confirm" type="password" class="glass-input" placeholder="Repeat your password" autocomplete="new-password" required maxlength="128">
                     </div>
                     <button type="submit" class="auth-submit-btn">Create account</button>
                 </form>
@@ -160,9 +160,10 @@
     }
 
     function followPostAuthRedirect() {
-        const redirect = sessionStorage.getItem('postAuthRedirect');
-        if (!redirect) return false;
+        const stored = sessionStorage.getItem('postAuthRedirect');
+        if (!stored) return false;
         sessionStorage.removeItem('postAuthRedirect');
+        const redirect = (window.AppUtils && window.AppUtils.safeRedirectPath(stored)) || '/';
         window.location.href = redirect;
         return true;
     }
@@ -232,15 +233,15 @@
         if (/invalid login credentials|invalid email or password/i.test(msg)) {
             return 'Invalid email or password. If you signed up with Google, use Continue with Google.';
         }
-        return msg || 'Sign in failed';
+        return 'Invalid email or password. If you signed up with Google, use Continue with Google.';
     }
 
     function signupErrorMessage(error) {
         const msg = (error && error.message) || '';
         if (isDuplicateEmailError(msg)) {
-            return 'This email is already linked to an account. Sign in with Google or use a different email.';
+            return 'If this email is registered, check your inbox or sign in.';
         }
-        return msg || 'Sign up failed';
+        return 'Could not create account. If this email is registered, check your inbox or sign in.';
     }
 
     function highlightGoogleButton(panel) {
@@ -459,8 +460,8 @@
                 showError('signup-error', 'Passwords do not match.');
                 return;
             }
-            if (password.length < 6) {
-                showError('signup-error', 'Password must be at least 6 characters.');
+            if (password.length < 8) {
+                showError('signup-error', 'Password must be at least 8 characters.');
                 return;
             }
 

@@ -9,6 +9,14 @@ async def trending():
     return await tmdb_service.get_trending()
 
 
+@router.get("/{tmdb_id}/full")
+async def movie_detail_full(tmdb_id: int):
+    movie = await tmdb_service.fetch_movie_full(tmdb_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Not found")
+    return movie
+
+
 @router.get("/{tmdb_id}")
 async def movie_detail(tmdb_id: int):
     movie = await tmdb_service.fetch_movie(tmdb_id)

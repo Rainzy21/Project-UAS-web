@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.lock
+
+      - name: Ruff
+        run: ruff check backend/app tests
+
+      - name: pip-audit
+        run: pip install pip-audit && pip-audit -r backend/requirements.lock
+
+      - name: Pytest
+        env:
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_JWT_SECRET: test-secret-test-secret-test-secret-test
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTYsImV4cCI6OTk5OTk5OTk5fQ.test
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCicm9sZSI6ImFub24iLCJpYXQiOjE2LCJleHAiOjk5OTk5OTk5OTl9.test
+          REDIS_URL: redis://localhost:6379
+          ENVIRONMENT: development
+        run: pytest tests/ -v
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend utils tests
+        run: node frontend/Static/js/utils.test.js

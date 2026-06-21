@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at timestamptz DEFAULT now()
 );
 
--- Movie cache (populated by FastAPI on demand)
+-- Movie cache (populated by save_movie_to_wishlist RPC / backend)
 CREATE TABLE IF NOT EXISTS public.movies (
   tmdb_id    integer PRIMARY KEY,
   title      text NOT NULL,
@@ -20,6 +20,27 @@ CREATE TABLE IF NOT EXISTS public.movies (
   genres     jsonb,
   created_at timestamptz DEFAULT now()
 );
+
+ALTER TABLE public.movies ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'movies' AND policyname = 'movies_select_authenticated'
+  ) THEN
+    CREATE POLICY "movies_select_authenticated" ON public.movies
+      FOR SELECT TO authenticated USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'movies' AND policyname = 'movies_select_anon'
+  ) THEN
+    CREATE POLICY "movies_select_anon" ON public.movies
+      FOR SELECT TO anon USING (true);
+  END IF;
+END $$;
 
 -- Saved movies / wishlist
 CREATE TABLE IF NOT EXISTS public.saved_movies (

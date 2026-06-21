@@ -4,11 +4,6 @@
 (function () {
     'use strict';
 
-    const TMDB_KEY  = (window.APP_CONFIG && window.APP_CONFIG.TMDB_API_KEY) || '';
-    const TMDB_BASE = 'https://api.themoviedb.org/3';
-    const IMG_W500  = 'https://image.tmdb.org/t/p/w500';
-
-    /* Sample picks per mood — frontend demo only, not sent to API */
     const TASTE_SAMPLES = {
         Unsettled: {
             tmdb_id: 496243,
@@ -49,20 +44,12 @@
 
     const posterCache = {};
 
-    async function tmdbFetch(path) {
-        const sep = path.includes('?') ? '&' : '?';
-        const res = await fetch(`${TMDB_BASE}${path}${sep}api_key=${TMDB_KEY}&language=en-US`);
-        if (!res.ok) throw new Error('TMDB ' + res.status);
-        return res.json();
-    }
-
     async function loadPoster(tmdbId) {
         if (posterCache[tmdbId]) return posterCache[tmdbId];
-        if (!TMDB_KEY) return null;
         try {
-            const data = await tmdbFetch(`/movie/${tmdbId}`);
-            if (data.poster_path) {
-                posterCache[tmdbId] = `${IMG_W500}${data.poster_path}`;
+            const movie = await window.Api.get(`/api/movies/${tmdbId}`);
+            if (movie.poster_url) {
+                posterCache[tmdbId] = movie.poster_url;
                 return posterCache[tmdbId];
             }
         } catch (_) {}
@@ -82,7 +69,6 @@
             container.appendChild(btn);
         });
 
-        // Preload posters in background
         Object.values(TASTE_SAMPLES).forEach(s => loadPoster(s.tmdb_id));
     }
 
@@ -96,26 +82,49 @@
         const placeholder = document.getElementById('taste-placeholder');
         const card = document.getElementById('taste-card');
         const tease = document.getElementById('taste-tease');
+        const U = window.AppUtils;
 
         placeholder.classList.add('hidden');
         card.classList.remove('hidden');
         tease.classList.remove('hidden');
+        card.innerHTML = '';
 
         const poster = await loadPoster(sample.tmdb_id);
-        card.innerHTML = `
-            ${poster
-                ? `<img class="lp-taste-poster" src="${poster}" alt="${sample.title}" loading="lazy">`
-                : `<div class="lp-taste-poster-ph"><i class="fa-solid fa-film"></i></div>`
-            }
-            <div class="lp-taste-body">
-                <div class="lp-taste-match"><span class="lp-taste-match-val">${sample.match}%</span> match</div>
-                <div class="lp-taste-title">${sample.title}</div>
-                <div class="lp-taste-meta">${sample.year} · Sample pick for "${mood}" mood</div>
-                <p class="lp-taste-reason">${sample.reason}</p>
-            </div>
-        `;
+        const posterEl = U.createPosterElement(poster, 'lp-taste-poster');
+        if (posterEl.classList.contains('rec-rate-poster-ph')) {
+            posterEl.className = 'lp-taste-poster-ph';
+        }
+        card.appendChild(posterEl);
 
-        // Re-trigger animation
+        const body = document.createElement('div');
+        body.className = 'lp-taste-body';
+
+        const matchEl = document.createElement('div');
+        matchEl.className = 'lp-taste-match';
+        const matchVal = document.createElement('span');
+        matchVal.className = 'lp-taste-match-val';
+        matchVal.textContent = `${sample.match}%`;
+        matchEl.appendChild(matchVal);
+        matchEl.appendChild(document.createTextNode(' match'));
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'lp-taste-title';
+        titleEl.textContent = sample.title;
+
+        const metaEl = document.createElement('div');
+        metaEl.className = 'lp-taste-meta';
+        metaEl.textContent = `${sample.year} · Sample pick for "${mood}" mood`;
+
+        const reasonEl = document.createElement('p');
+        reasonEl.className = 'lp-taste-reason';
+        reasonEl.textContent = sample.reason;
+
+        body.appendChild(matchEl);
+        body.appendChild(titleEl);
+        body.appendChild(metaEl);
+        body.appendChild(reasonEl);
+        card.appendChild(body);
+
         card.style.animation = 'none';
         void card.offsetWidth;
         card.style.animation = '';

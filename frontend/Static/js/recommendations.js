@@ -19,13 +19,6 @@
     const PENDING_KEY = 'recPendingAnswers';
     const PENDING_GEN_KEY = 'recPendingGenerate';
 
-    const REASON_TEMPLATES = [
-        (m) => `Because you wanted a <strong>${m.toLowerCase()}</strong> mood in ${'{genre}'}.`,
-        (m) => `Because your taste leans <strong>${m.toLowerCase()}</strong> — same energy we matched on.`,
-        (m) => `Because the <strong>${'{genre}'}</strong> picks fit your ${m.toLowerCase()} feeling.`,
-        (m) => `Because this matches your ${m.toLowerCase()} preference from the quiz.`,
-    ];
-
     const state = { step: 1, answers: {} };
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -306,25 +299,7 @@
         });
 
         if (rpcErr) {
-            if (rpcErr.code === 'PGRST202' || rpcErr.message.includes('Could not find')) {
-                const { error: upsertErr } = await sb.from('movies').upsert(
-                    {
-                        tmdb_id: tmdbId,
-                        title: movie.title || 'Untitled',
-                        poster_url: posterUrl,
-                        rating: movie.rating || 0,
-                        year: yr,
-                    },
-                    { onConflict: 'tmdb_id', ignoreDuplicates: true }
-                );
-                if (upsertErr) throw upsertErr;
-
-                const { error: ins } = await sb.from('saved_movies')
-                    .insert({ tmdb_id: tmdbId, user_id: session.user.id });
-                if (ins && ins.code !== '23505') throw ins;
-            } else {
-                throw rpcErr;
-            }
+            throw rpcErr;
         }
     }
 
@@ -334,43 +309,88 @@
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved to My List';
     }
 
+    function createReasonEl(mood, genre, index) {
+        const p = document.createElement('p');
+        p.className = 'rec-result-reason';
+        const moodLower = (mood || 'your').toLowerCase();
+        const genreText = genre || 'your picks';
+        const texts = [
+            `Because you wanted a ${moodLower} mood in ${genreText}.`,
+            `Because your taste leans ${moodLower} — same energy we matched on.`,
+            `Because the ${genreText} picks fit your ${moodLower} feeling.`,
+            `Because this matches your ${moodLower} preference from the quiz.`,
+        ];
+        p.textContent = texts[index % texts.length];
+        return p;
+    }
+
     async function renderResults(movies) {
         const grid = document.getElementById('rec-results-grid');
+        const U = window.AppUtils;
         grid.innerHTML = '';
         const mood = state.answers.mood || 'your';
+        const genre = state.answers.genre || 'your picks';
         const savedIds = await fetchSavedTmdbIds();
 
         if (!movies.length) {
-            grid.innerHTML = '<p class="text-center text-white/40 py-12">No matches found. Try different filters.</p>';
+            const empty = document.createElement('p');
+            empty.className = 'text-center text-white/40 py-12';
+            empty.textContent = 'No matches found. Try different filters.';
+            grid.appendChild(empty);
         } else {
             movies.forEach((m, i) => {
                 const match = Math.round(97 - i * (7 / Math.max(movies.length - 1, 1)));
-                const reason = REASON_TEMPLATES[i % REASON_TEMPLATES.length](mood)
-                    .replace('{genre}', state.answers.genre || 'your picks');
                 const isSaved = savedIds.has(m.tmdb_id);
+                const tmdbId = encodeURIComponent(Number(m.tmdb_id));
 
                 const card = document.createElement('article');
                 card.className = 'rec-result-card';
-                card.innerHTML = `
-                    <a href="detail.html?id=${m.tmdb_id}" class="rec-result-link">
-                        ${m.poster_url
-                            ? `<img class="rec-result-poster" src="${m.poster_url}" alt="" loading="lazy">`
-                            : `<div class="rec-result-poster rec-rate-poster-ph"><i class="fa-solid fa-film"></i></div>`
-                        }
-                        <div class="rec-result-body">
-                            <div class="rec-result-match"><span class="rec-result-match-val">${match}%</span> match</div>
-                            <div class="rec-result-title">${m.title || 'Unknown'}</div>
-                            <div class="rec-result-meta">${m.year || ''}${m.rating ? ' · ★ ' + Number(m.rating).toFixed(1) : ''}</div>
-                            <p class="rec-result-reason">${reason}</p>
-                        </div>
-                    </a>
-                    <button type="button" class="rec-result-save${isSaved ? ' is-saved' : ''}" data-tmdb-id="${m.tmdb_id}"${isSaved ? ' disabled' : ''}>
-                        <i class="fa-${isSaved ? 'solid fa-check' : 'regular fa-bookmark'}"></i>
-                        ${isSaved ? 'Saved to My List' : 'Save to My List'}
-                    </button>
-                `;
 
-                const saveBtn = card.querySelector('.rec-result-save');
+                const link = document.createElement('a');
+                link.href = `detail.html?id=${tmdbId}`;
+                link.className = 'rec-result-link';
+
+                const posterEl = U.createPosterElement(m.poster_url, 'rec-result-poster');
+                link.appendChild(posterEl);
+
+                const body = document.createElement('div');
+                body.className = 'rec-result-body';
+
+                const matchEl = document.createElement('div');
+                matchEl.className = 'rec-result-match';
+                const matchVal = document.createElement('span');
+                matchVal.className = 'rec-result-match-val';
+                matchVal.textContent = `${match}%`;
+                matchEl.appendChild(matchVal);
+                matchEl.appendChild(document.createTextNode(' match'));
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'rec-result-title';
+                titleEl.textContent = m.title || 'Unknown';
+
+                const metaEl = document.createElement('div');
+                metaEl.className = 'rec-result-meta';
+                const metaParts = [];
+                if (m.year) metaParts.push(String(m.year));
+                if (m.rating) metaParts.push(`★ ${Number(m.rating).toFixed(1)}`);
+                metaEl.textContent = metaParts.join(' · ');
+
+                body.appendChild(matchEl);
+                body.appendChild(titleEl);
+                body.appendChild(metaEl);
+                body.appendChild(createReasonEl(mood, genre, i));
+                link.appendChild(body);
+                card.appendChild(link);
+
+                const saveBtn = document.createElement('button');
+                saveBtn.type = 'button';
+                saveBtn.className = 'rec-result-save' + (isSaved ? ' is-saved' : '');
+                saveBtn.dataset.tmdbId = String(m.tmdb_id);
+                if (isSaved) saveBtn.disabled = true;
+                saveBtn.innerHTML = isSaved
+                    ? '<i class="fa-solid fa-check"></i> Saved to My List'
+                    : '<i class="fa-regular fa-bookmark"></i> Save to My List';
+
                 if (!isSaved) {
                     saveBtn.addEventListener('click', async e => {
                         e.preventDefault();
@@ -394,6 +414,7 @@
                     });
                 }
 
+                card.appendChild(saveBtn);
                 grid.appendChild(card);
             });
         }
@@ -434,12 +455,18 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'rec-preset-chip';
-                btn.innerHTML = `<span>${preset.name}</span><i class="fa-solid fa-xmark rec-preset-delete" data-id="${preset.id}" title="Delete"></i>`;
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = preset.name || 'Preset';
+                const delIcon = document.createElement('i');
+                delIcon.className = 'fa-solid fa-xmark rec-preset-delete';
+                delIcon.title = 'Delete';
+                btn.appendChild(nameSpan);
+                btn.appendChild(delIcon);
                 btn.addEventListener('click', e => {
                     if (e.target.closest('.rec-preset-delete')) return;
                     applyPreset(preset.preferences || {});
                 });
-                btn.querySelector('.rec-preset-delete')?.addEventListener('click', async e => {
+                delIcon.addEventListener('click', async e => {
                     e.stopPropagation();
                     await deletePreset(preset.id);
                 });

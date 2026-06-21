@@ -13,6 +13,9 @@ env/
 .env
 *.env
 
+# Frontend runtime config (contains Supabase keys — use config.example.js)
+frontend/Static/js/config.js
+
 # Database
 db.sqlite3
 

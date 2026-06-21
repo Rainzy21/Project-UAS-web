@@ -168,7 +168,7 @@
                     return;
                 }
                 if (newPw.length < 6) {
-                    errEl.textContent = 'Password must be at least 6 characters.';
+                    errEl.textContent = 'Password must be at least 8 characters.';
                     errEl.classList.remove('hidden');
                     return;
                 }
@@ -221,7 +221,7 @@
                 if (hasPassword && !pw) return;
                 try {
                     const body = hasPassword ? { current_password: pw } : {};
-                    await window.Api.delete('/api/users/me', { body: JSON.stringify(body) });
+                    await window.Api.delete('/api/users/me', body);
                     window.Auth.logout && window.Auth.logout();
                     window.location.href = '/';
                 } catch (err) {

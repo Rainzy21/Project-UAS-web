@@ -1,0 +1,67 @@
+# Render Blueprint — SJ MovieReview
+# Deploy: Render Dashboard → New → Blueprint → connect this repo
+# Docs: docs/DEPLOY_RENDER.md
+
+services:
+  # ── Redis (rate limiting) ──────────────────────────────────────────────
+  - type: redis
+    name: sj-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # ── FastAPI backend ────────────────────────────────────────────────────
+  - type: web
+    name: sj-moviereview-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: TRUSTED_PROXY_IPS
+        value: "*"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: sj-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: sj-moviereview-web
+          property: host
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: TMDB_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  # ── Static frontend ────────────────────────────────────────────────────
+  - type: web
+    name: sj-moviereview-web
+    runtime: static
+    buildCommand: chmod +x scripts/render-build-frontend.sh && ./scripts/render-build-frontend.sh
+    staticPublishPath: ./frontend
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: API_HOST
+        fromService:
+          type: web
+          name: sj-moviereview-api
+          property: host

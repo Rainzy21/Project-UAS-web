@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' https://image.tmdb.org data:; connect-src 'self' https://*.supabase.co http://localhost:8000; frame-ancestors 'none'; base-uri 'self';">
     <title>Movie Detail · SJ MovieReview</title>
     <meta name="description" content="View movie details, trailers, cast information and save to your watchlist.">
     <script src="Static/js/origin-guard.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link rel="stylesheet" href="Static/css/style.css">
     <link rel="stylesheet" href="Static/css/landing.css">
 </head>
@@ -102,7 +103,7 @@
     <footer class="w-full border-t border-white/5 mt-auto relative z-10" style="background: rgba(5,5,7,0.8); backdrop-filter: blur(20px);">
         <div class="max-w-[1400px] mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <nav class="flex items-center gap-8 text-sm">
-                <a href="#" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
+                <a href="privacy.html" class="text-white/30 hover:text-white/60 transition">Privacy Policy</a>
                 <a href="#" class="text-white/30 hover:text-white/60 transition">Terms of Service</a>
             </nav>
             <p class="text-white/20 text-xs tracking-wide">&copy; 2026 SJ MovieReview.</p>
@@ -110,8 +111,9 @@
     </footer>
 
     <!-- Supabase JS client (must load FIRST) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js" integrity="sha384-z2hqtpr/vSDZ8zSjLOiNgnR/mpU799AD93s6rvkNJLI6Hl0YlKXEhDtREzNT749S" crossorigin="anonymous"></script>
     <script src="Static/js/config.js"></script>
+    <script src="Static/js/utils.js"></script>
     <script src="Static/js/toast.js"></script>
     <script src="Static/js/api.js"></script>
     <script src="Static/js/auth.js"></script>
@@ -127,66 +129,83 @@
         }
 
         try {
-            const movie = await window.AppAPI.fetchMovieDetail(tmdbId);
+            const movie = await window.Api.get(`/api/movies/${encodeURIComponent(tmdbId)}/full`);
+            const U = window.AppUtils;
 
-            // Title
             document.getElementById('detail-title').textContent = movie.title;
             document.title = `${movie.title} · SJ MovieReview`;
 
-            // Backdrop
-            if (movie.backdrop_path) {
+            if (movie.backdrop_url && U.safePosterUrl(movie.backdrop_url.replace('/t/p/original', '/t/p/w1280'))) {
                 document.getElementById('backdrop-img').style.backgroundImage =
-                    `url(${window.AppAPI.backdropUrl(movie.backdrop_path)})`;
+                    `url(${U.safePosterUrl(movie.backdrop_url) || movie.backdrop_url})`;
+            } else if (movie.backdrop_url) {
+                try {
+                    const u = new URL(movie.backdrop_url);
+                    if (u.hostname.endsWith('image.tmdb.org')) {
+                        document.getElementById('backdrop-img').style.backgroundImage = `url(${u.href})`;
+                    }
+                } catch (_) {}
             }
 
-            // Poster
-            if (movie.poster_path) {
+            const posterSrc = U.safePosterUrl(movie.poster_url);
+            if (posterSrc) {
                 const posterWrap = document.getElementById('detail-poster-wrap');
                 posterWrap.classList.remove('hidden');
                 const posterImg = document.getElementById('detail-poster');
-                posterImg.src = window.AppAPI.posterUrl(movie.poster_path);
-                posterImg.alt = movie.title;
+                posterImg.src = posterSrc;
+                posterImg.alt = movie.title || '';
             }
 
-            // Genres
             const genresEl = document.getElementById('detail-genres');
             (movie.genres || []).forEach(g => {
                 const pill = document.createElement('span');
                 pill.className = 'glass-pill text-xs';
-                pill.textContent = g.name;
+                pill.textContent = g.name || g;
                 genresEl.appendChild(pill);
             });
 
-            // Meta
             const metaEl = document.getElementById('detail-meta');
-            const rating = (movie.vote_average || 0).toFixed(1);
-            const year = (movie.release_date || '').slice(0, 4);
-            const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '';
+            metaEl.innerHTML = '';
+            const ratingWrap = document.createElement('div');
+            ratingWrap.className = 'flex items-center gap-2';
+            ratingWrap.innerHTML = '<i class="fa-solid fa-star" style="color: var(--lp-red);"></i>';
+            const ratingSpan = document.createElement('span');
+            ratingSpan.className = 'font-bold text-white text-base';
+            ratingSpan.textContent = Number(movie.rating || 0).toFixed(1);
+            ratingWrap.appendChild(ratingSpan);
+            const tenSpan = document.createElement('span');
+            tenSpan.className = 'text-xs';
+            tenSpan.textContent = '/10';
+            ratingWrap.appendChild(tenSpan);
+            metaEl.appendChild(ratingWrap);
+            if (movie.year) {
+                const yearSpan = document.createElement('span');
+                yearSpan.textContent = String(movie.year);
+                metaEl.appendChild(yearSpan);
+            }
+            if (movie.runtime) {
+                const rtSpan = document.createElement('span');
+                rtSpan.textContent = `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`;
+                metaEl.appendChild(rtSpan);
+            }
+            if (movie.language) {
+                const langSpan = document.createElement('span');
+                langSpan.className = 'glass-pill text-[10px] uppercase';
+                langSpan.textContent = movie.language;
+                metaEl.appendChild(langSpan);
+            }
 
-            metaEl.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-star" style="color: var(--lp-red);"></i>
-                    <span class="font-bold text-white text-base">${rating}</span><span class="text-xs">/10</span>
-                </div>
-                ${year ? `<span>${year}</span>` : ''}
-                ${runtime ? `<span>${runtime}</span>` : ''}
-                ${movie.original_language ? `<span class="glass-pill text-[10px] uppercase">${movie.original_language}</span>` : ''}
-            `;
-
-            // Overview
             document.getElementById('detail-overview').textContent = movie.overview || '';
 
-            // Trailer
             if (movie.videos && movie.videos.results) {
                 const trailer = movie.videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
-                if (trailer) {
+                if (trailer && trailer.key) {
                     const trailerBtn = document.getElementById('detail-trailer-btn');
-                    trailerBtn.href = `https://www.youtube.com/watch?v=${trailer.key}`;
+                    trailerBtn.href = `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}`;
                     trailerBtn.classList.remove('hidden');
                 }
             }
 
-            // Cast
             if (movie.credits && movie.credits.cast && movie.credits.cast.length > 0) {
                 const castSection = document.getElementById('detail-cast-section');
                 castSection.classList.remove('hidden');
@@ -194,21 +213,38 @@
                 movie.credits.cast.slice(0, 10).forEach(c => {
                     const card = document.createElement('div');
                     card.className = 'flex-shrink-0 w-24 text-center';
-                    const imgSrc = c.profile_path
+
+                    const avatar = document.createElement('div');
+                    avatar.className = 'w-20 h-20 rounded-full mx-auto mb-2 overflow-hidden bg-white/5 border border-white/10';
+                    const profilePath = c.profile_path
                         ? `https://image.tmdb.org/t/p/w185${c.profile_path}`
                         : '';
-                    card.innerHTML = `
-                        <div class="w-20 h-20 rounded-full mx-auto mb-2 overflow-hidden bg-white/5 border border-white/10">
-                            ${imgSrc ? `<img src="${imgSrc}" alt="${c.name}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-white/20"><i class="fa-solid fa-user"></i></div>'}
-                        </div>
-                        <p class="text-xs font-medium truncate text-white/70">${c.name}</p>
-                        <p class="text-[10px] text-white/30 truncate">${c.character || ''}</p>
-                    `;
+                    const profileSrc = U.safePosterUrl(profilePath);
+                    if (profileSrc) {
+                        const img = document.createElement('img');
+                        img.src = profileSrc;
+                        img.alt = c.name || '';
+                        img.className = 'w-full h-full object-cover';
+                        avatar.appendChild(img);
+                    } else {
+                        avatar.innerHTML = '<div class="w-full h-full flex items-center justify-center text-white/20"><i class="fa-solid fa-user"></i></div>';
+                    }
+                    card.appendChild(avatar);
+
+                    const nameP = document.createElement('p');
+                    nameP.className = 'text-xs font-medium truncate text-white/70';
+                    nameP.textContent = c.name || '';
+                    card.appendChild(nameP);
+
+                    const charP = document.createElement('p');
+                    charP.className = 'text-[10px] text-white/30 truncate';
+                    charP.textContent = c.character || '';
+                    card.appendChild(charP);
+
                     castEl.appendChild(card);
                 });
             }
 
-            // Info card
             const infoCard = document.getElementById('detail-info-card');
             infoCard.classList.remove('hidden');
             const infoList = document.getElementById('detail-info-list');
@@ -223,11 +259,17 @@
             infos.forEach(info => {
                 const row = document.createElement('div');
                 row.className = 'flex justify-between';
-                row.innerHTML = `<span class="text-white/40">${info.label}</span><span class="text-white/70 text-right">${info.value}</span>`;
+                const label = document.createElement('span');
+                label.className = 'text-white/40';
+                label.textContent = info.label;
+                const val = document.createElement('span');
+                val.className = 'text-white/70 text-right';
+                val.textContent = info.value;
+                row.appendChild(label);
+                row.appendChild(val);
                 infoList.appendChild(row);
             });
 
-            // Save button — RPC (preferred) or direct insert (fallback)
             const saveBtn = document.getElementById('detail-save-btn');
             saveBtn.addEventListener('click', async () => {
                 const session = window.Auth ? await window.Auth.getSession() : null;
@@ -236,34 +278,15 @@
                     saveBtn.disabled = true;
                     saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving\u2026';
                     const sb = window.Auth.getClient();
-                    const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
-                    const yrStr = (movie.release_date || '').slice(0, 4);
-                    const yr = yrStr ? parseInt(yrStr, 10) : null;
+                    const posterUrl = movie.poster_url || '';
+                    const yr = movie.year ? parseInt(movie.year, 10) : null;
 
-                    // Try RPC first
                     const { error: rpcErr } = await sb.rpc('save_movie_to_wishlist', {
                         p_tmdb_id: Number(tmdbId), p_title: movie.title,
-                        p_poster_url: posterUrl, p_rating: movie.vote_average || 0, p_year: yr,
+                        p_poster_url: posterUrl, p_rating: movie.rating || 0, p_year: yr,
                     });
 
-                    if (rpcErr) {
-                        if (rpcErr.code === 'PGRST202' || rpcErr.message.includes('Could not find')) {
-                            // Fallback: direct upsert + insert
-                            const { error: upsertErr } = await sb.from('movies').upsert(
-                                { tmdb_id: Number(tmdbId), title: movie.title, poster_url: posterUrl, rating: movie.vote_average || 0, year: yr },
-                                { onConflict: 'tmdb_id', ignoreDuplicates: true }
-                            ); 
-                            
-                            if (upsertErr) {
-                                console.error("Movies upsert error:", upsertErr);
-                                throw new Error("Could not insert movie into database. Please run supabase_fix_wishlist.sql in your Supabase SQL editor to enable RLS or create the RPC function.");
-                            }
-                            
-                            const { error: ins } = await sb.from('saved_movies')
-                                .insert({ tmdb_id: Number(tmdbId), user_id: session.user.id });
-                            if (ins && ins.code !== '23505') throw ins;
-                        } else { throw rpcErr; }
-                    }
+                    if (rpcErr) throw rpcErr;
 
                     saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
                     saveBtn.style.background = 'rgba(229,0,0,0.25)';
@@ -276,10 +299,7 @@
                 }
             });
 
-
-
         } catch (err) {
-            console.error('Failed to load movie detail', err);
             document.getElementById('detail-title').textContent = 'Movie not found';
             document.getElementById('detail-overview').textContent = 'Unable to load movie details. Please try again.';
         }

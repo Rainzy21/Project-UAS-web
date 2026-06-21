@@ -2,18 +2,20 @@
 """
 Interactive terminal movie recommendation CLI.
 Usage:
-    python recommend.py
+    python scripts/recommend.py
 """
 from __future__ import annotations
 import getpass
 import json
 import sqlite3
 import sys
+from pathlib import Path
 
 import httpx
 
 BASE = "http://localhost:8000"
-DB   = "backend/database.db"
+ROOT = Path(__file__).resolve().parents[1]
+DB = str(ROOT / "backend" / "database.db")
 
 # ── ANSI colours ─────────────────────────────────────────────────────────────
 R  = "\033[0m"       # reset
