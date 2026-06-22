@@ -1,173 +1,104 @@
-# SJ MovieReview — Rekomendasi Film Berbasis AI
+# SJ MovieReview
 
-Aplikasi rekomendasi film full-stack: backend **FastAPI**, frontend **HTML/JS/Tailwind** statis, **Supabase** untuk auth & database, **TMDB** untuk metadata film, dan **Gemini/DeepSeek** untuk rekomendasi AI.
+Aplikasi rekomendasi film full-stack berbasis AI. Mendukung pencarian film cerdas dengan menganalisis genre, mood, era, dan bahasa menggunakan AI, serta fitur wishlist untuk menyimpan film favorit Anda.
 
-| Lapisan | Teknologi |
-|---------|-----------|
-| Backend | FastAPI, rate limiting Redis, Sentry (opsional) |
-| Frontend | Vanilla JS, Supabase Auth (PKCE), Tailwind CDN |
-| Database | Supabase Postgres + RLS |
-| Deploy | Docker, blueprint Render, nginx (lihat docs) |
+![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)
+![Frontend](https://img.shields.io/badge/Frontend-Tailwind%20CSS-38BDF8?style=flat-square&logo=tailwindcss)
+![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python)
+![Database](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=flat-square&logo=supabase)
 
 ---
 
-## Prasyarat
+## Fitur
 
-- **Python 3.12+** (sama dengan CI)
-- **Node.js 24+** (tes utils frontend di CI; opsional di lokal)
-- Proyek **Supabase** (auth + database)
-- **API key:** TMDB, Gemini dan/atau DeepSeek
-- **Redis** — opsional di lokal; wajib untuk rate limit produksi (`docker compose up redis`)
+| Fitur | Deskripsi |
+|---|---|
+| **Rekomendasi Cerdas AI** | Mencari rekomendasi film yang sangat spesifik berdasarkan preferensi mood, genre, bahasa, dan era |
+| **Integrasi TMDB Live** | Mengambil data metadata film yang sedang tren secara *real-time* langsung dari TMDB API |
+| **Autentikasi Aman** | Sistem login dan pendaftaran pengguna menggunakan Supabase Auth (PKCE) |
+| **Wishlist (My List)** | Menyimpan film-film hasil rekomendasi atau trending ke dalam daftar tontonan pribadi |
+
+- Pilihan model AI: **Google Gemini** atau **DeepSeek**
+- Rate limiting menggunakan Redis untuk keamanan produksi
+- Antarmuka responsif dengan carousel dinamis dan dark mode premium
 
 ---
 
-## Mulai cepat (lokal)
+## Tech Stack
 
-### 1. Clone dan konfigurasi
+- **Backend**: FastAPI + Uvicorn
+- **Frontend**: HTML, Tailwind CSS (CDN), Vanilla JavaScript
+- **Database & Auth**: Supabase (PostgreSQL + RLS)
+- **External APIs**: TMDB API, Gemini API / DeepSeek API
+- **Caching/Rate Limit**: Redis
+
+---
+
+## Instalasi
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/Rainzy21/Project-UAS-web.git
+cd Project-UAS-web
+```
+
+### 2. Konfigurasi Lingkungan (Environment)
+
+Salin file `.env.example` menjadi `.env`, lalu isi dengan kredensial Supabase, TMDB, dan API Key AI Anda.
 
 ```bash
 cp .env.example .env
-# Edit .env — Supabase, TMDB, key AI, FRONTEND_URL=http://localhost:5500
-
-cp frontend/Static/js/config.example.js frontend/Static/js/config.js
-# Edit config.js — SUPABASE_URL, SUPABASE_ANON_KEY (API_BASE default ke localhost:8000)
 ```
 
-Terapkan skema database sekali:
+Salin file konfigurasi frontend:
+
+```bash
+cp frontend/Static/js/config.example.js frontend/Static/js/config.js
+```
+*(Jangan lupa untuk memasukkan `SUPABASE_URL` dan `SUPABASE_ANON_KEY` Anda di dalam `config.js`)*
+
+Terapkan skema database (jalankan sekali):
 
 ```bash
 SUPABASE_DB_PASSWORD='password-db-anda' ./scripts/apply_supabase_schema.sh
 ```
 
-### 2. Backend (terminal 1)
+### 3. Jalankan Backend
+
+Buka terminal pertama untuk menyalakan server API:
 
 ```bash
 cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.lock
+python -m venv .venv
+
+# Windows
+.\.venv\Scripts\activate
+
+# Linux/Mac
+source .venv/bin/activate
+
+pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-- API: http://localhost:8000  
-- Swagger (hanya dev): http://localhost:8000/docs  
-- Health: http://localhost:8000/health  
+### 4. Jalankan Frontend
 
-### 3. Frontend (terminal 2)
-
-Pakai **Live Server** di `frontend/index.html` (port **5500**), atau:
+Buka terminal kedua untuk menyalakan server web statis:
 
 ```bash
-cd frontend && python -m http.server 5500
+cd frontend
+python -m http.server 5500
 ```
-
-Buka http://localhost:5500 — pakai `localhost`, bukan `127.0.0.1` (OAuth PKCE).
-
-### 4. Redis (opsional di lokal)
-
-Rate limit produksi memakai Redis. Untuk tes lokal:
-
-```bash
-docker compose up redis -d
-# REDIS_URL=redis://localhost:6379 di .env
-```
-
-Atau jalankan stack lengkap:
-
-```bash
-docker compose up --build
-```
+Buka browser dan kunjungi `http://localhost:5500`. *(Pastikan mengakses menggunakan `localhost`, bukan `127.0.0.1`)*
 
 ---
 
-## Variabel lingkungan
+## Deploy (Produksi)
 
-Salin dari [`.env.example`](.env.example). Nilai penting:
-
-| Variabel | Fungsi |
-|----------|--------|
-| `SUPABASE_*` | Auth + database (service role **hanya backend**) |
-| `TMDB_API_KEY` | Metadata film (hanya backend — tidak di frontend) |
-| `GEMINI_API_KEY` / `DEEPSEEK_API_KEY` | Rekomendasi AI |
-| `REDIS_URL` | Rate limiting |
-| `FRONTEND_URL` | Origin CORS (mis. `http://localhost:5500`) |
-| `ENVIRONMENT` | `development` \| `staging` \| `production` |
-| `SENTRY_DSN` | Pelacakan error (opsional) |
-
-**Jangan pernah commit** `.env` atau `frontend/Static/js/config.js`.
-
----
-
-## Tes & CI
-
-```bash
-# Backend (dari root repo)
-pip install -r backend/requirements.lock
-pytest tests/ -v
-
-# Utils frontend
-node frontend/Static/js/utils.test.js
-
-# Lint & audit
-ruff check backend/app tests
-pip-audit -r backend/requirements.lock
-```
-
-GitHub Actions (`.github/workflows/ci.yml`) menjalankan ruff, pytest, pip-audit, gitleaks, dan tes frontend saat push/PR.
-
----
-
-## Deploy
-
-| Panduan | Kapan dipakai |
-|---------|---------------|
-| [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md) | Deploy ke Render + Supabase (disarankan) |
-| [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md) | Checklist sebelum go-live (secret, skema, TLS, pg_cron) |
-| [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) | Temuan keamanan & status perbaikan |
-
-Config frontend produksi:
-
-```bash
-API_BASE=/api SUPABASE_URL=... SUPABASE_ANON_KEY=... ./scripts/inject-config.sh
-```
-
-Atau pakai `scripts/render-build-frontend.sh` di Render static site.
-
----
-
-## Struktur proyek
-
-```
-backend/app/          Aplikasi FastAPI (router, service, auth, Redis)
-frontend/             Halaman HTML statis + Static/js/
-scripts/              Apply skema, inject config, build Render
-supabase_migrations/  Lockdown RLS, retention cleanup (pg_cron)
-tests/                Pytest (auth, export, hapus akun, rate limit)
-deploy/nginx.conf     Referensi TLS + proxy API produksi
-docker-compose.yml    Backend + Redis
-render.yaml           Blueprint Render
-```
-
----
-
-## Troubleshooting
-
-| Masalah | Solusi |
-|---------|--------|
-| `Module not found` (backend) | Aktifkan `.venv`; install dari `requirements.lock` |
-| Error CORS | Backend di `:8000`; `FRONTEND_URL` sesuai origin frontend |
-| Auth / OAuth gagal | Pakai `localhost` bukan `127.0.0.1`; tambah redirect URL di Supabase Dashboard |
-| Riwayat rekomendasi kosong | Jalankan `./scripts/apply_supabase_schema.sh` |
-| Error rate limit / Redis | Jalankan Redis atau set `REDIS_URL` |
-| Rekomendasi 403 | Verifikasi email di Supabase (wajib untuk `/generate`) |
-
----
-
-## Catatan keamanan
-
-- `config.js` **di-gitignore** — pakai `config.example.js` di lokal; inject saat deploy.
-- Jika API key pernah ter-commit, **rotasi** key dan pertimbangkan scrub history git.
-- Lihat [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) untuk audit lengkap & checklist operator.
+Untuk panduan deployment ke Render (Backend) dan Vercel (Frontend), silakan baca dokumentasi khusus berikut:
+- [Deploy ke Render (Panduan Lengkap)](docs/DEPLOY_RENDER.md)
+- [Checklist Deployment & Keamanan](docs/DEPLOYMENT_RUNBOOK.md)
 
 ---
 
