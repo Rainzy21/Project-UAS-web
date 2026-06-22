@@ -183,10 +183,9 @@ body::after {
     position: absolute;
     inset: 0;
     background-color: #050000;
-    /* Empty cinema aisle — mood hook, not a specific film */
-    background-image: url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1920&q=80');
     background-size: cover;
     background-position: center 42%;
+    transition: background-image 0.8s ease;
     animation: lpHeroKenBurns 22s ease-in-out infinite alternate;
 }
 @keyframes lpHeroKenBurns {
@@ -513,6 +512,42 @@ body::after {
 .lp-taste-scroll:hover {
     color: rgba(255,255,255,0.65);
 }
+.lp-taste-rating {
+    font-size: 0.6875rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.lp-taste-next {
+    margin-top: 1.25rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    background: var(--lp-accent-grad);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    box-shadow: 0 0 20px var(--lp-accent-glow-soft);
+    transition: all 0.15s ease;
+}
+.lp-taste-next:hover {
+    box-shadow: 0 0 32px var(--lp-accent-glow);
+    transform: translateY(-1px);
+    color: #ffffff;
+}
+.lp-taste-loading,
+.lp-taste-error {
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.4);
+}
 
 /* How it works — separate scroll section */
 .lp-how-section {
@@ -612,6 +647,216 @@ body::after {
     .lp-taste-section {
         padding: 3.5rem 0;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOVIE CAROUSEL SECTIONS (Trending & Top Rated)
+   ═════════════════════════════════════════════════════════════ */
+.lp-movies-section {
+    position: relative;
+    z-index: 10;
+    padding: 3.5rem 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+}
+.lp-movies-section--alt {
+    background: linear-gradient(to bottom, rgba(229,0,0,0.025) 0%, transparent 100%);
+}
+.lp-movies-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+.lp-movies-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+.lp-movies-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+.lp-movies-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(229,0,0,0.15);
+    border: 1px solid rgba(229,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #e50000;
+    flex-shrink: 0;
+}
+.lp-movies-badge--gold {
+    background: rgba(245,197,24,0.12);
+    border-color: rgba(245,197,24,0.25);
+    color: #f5c518;
+}
+.lp-movies-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.01em;
+    margin: 0;
+}
+
+/* Track wrapper */
+.lp-movies-track-wrap {
+    position: relative;
+    width: 100%;
+}
+.lp-movies-track {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0.25rem 1rem;
+    flex: 1;
+    scrollbar-width: none;
+}
+.lp-movies-track::-webkit-scrollbar { display: none; }
+
+/* Skeleton loader */
+.lp-movie-skeleton {
+    flex-shrink: 0;
+    width: 200px;
+    aspect-ratio: 2/3;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.04) 0%,
+        rgba(255,255,255,0.08) 50%,
+        rgba(255,255,255,0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: lp-shimmer 1.6s ease-in-out infinite;
+    scroll-snap-align: start;
+}
+@keyframes lp-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+/* Movie poster card */
+.lp-movie-card {
+    flex-shrink: 0;
+    width: 200px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    scroll-snap-align: start;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+}
+.lp-movie-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(229,0,0,0.35);
+    box-shadow: 0 8px 32px rgba(229,0,0,0.12);
+}
+.lp-movie-card-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+    background: rgba(255,255,255,0.04);
+}
+.lp-movie-card-poster-ph {
+    width: 100%;
+    aspect-ratio: 2/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.2);
+    font-size: 2rem;
+}
+.lp-movie-card-info {
+    padding: 0.625rem 0.75rem 0.75rem;
+}
+.lp-movie-card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.lp-movie-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.625rem;
+    color: rgba(255,255,255,0.35);
+}
+.lp-movie-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: #f5c518;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+/* Hover overlay on poster */
+.lp-movie-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5,0,0,0.9) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem;
+    pointer-events: none;
+}
+.lp-movie-card:hover .lp-movie-card-overlay {
+    opacity: 1;
+}
+.lp-movie-card-overlay-text {
+    font-size: 0.625rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Rank number for top-rated */
+.lp-movie-rank {
+    position: absolute;
+    top: 0.375rem;
+    left: 0.375rem;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(5,0,0,0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 800;
+    color: #f5c518;
+    border: 1px solid rgba(245,197,24,0.2);
+}
+
+@media (max-width: 768px) {
+    .lp-movies-inner { padding: 0 1rem; }
+    .lp-movie-card, .lp-movie-skeleton { width: 150px; }
 }
 
 /* Red reserved for AI moments */

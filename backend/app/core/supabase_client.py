@@ -1,6 +1,6 @@
 from typing import Optional
 
-from supabase import Client, create_client
+from supabase import Client, ClientOptions, create_client
 
 from app.core.config import settings
 
@@ -21,7 +21,5 @@ def get_user_client(access_token: str) -> Client:
     return create_client(
         settings.SUPABASE_URL,
         settings.SUPABASE_ANON_KEY,
-        options={
-            "global": {"headers": {"Authorization": f"Bearer {access_token}"}},
-        },
+        options=ClientOptions(headers={"Authorization": f"Bearer {access_token}"})
     )

@@ -18,6 +18,7 @@ _MAX_ENTRIES = settings.TMDB_CACHE_MAX_ENTRIES
 _cache: OrderedDict[int, tuple[dict, float]] = OrderedDict()
 _TRENDING_KEY = -1
 _FULL_DETAIL_CACHE: OrderedDict[int, tuple[dict, float]] = OrderedDict()
+_DISCOVER_CACHE: dict[str, tuple[list, float]] = {}
 
 
 def _cache_get(cache: OrderedDict, key: int) -> Optional[dict]:
@@ -165,6 +166,7 @@ async def get_trending() -> list[dict]:
             "title": m.get("title", ""),
             "overview": m.get("overview"),
             "poster_url": f"{settings.TMDB_IMAGE_BASE_URL}{m['poster_path']}" if m.get("poster_path") else None,
+            "backdrop_url": f"https://image.tmdb.org/t/p/original{m['backdrop_path']}" if m.get("backdrop_path") else None,
             "rating": m.get("vote_average"),
             "year": int(m["release_date"][:4]) if m.get("release_date") else None,
             "language": m.get("original_language"),
@@ -177,7 +179,90 @@ async def get_trending() -> list[dict]:
     return results
 
 
+_TOP_RATED_KEY = -2
+
+
+async def get_top_rated() -> list[dict]:
+    cached = _cache_get(_cache, _TOP_RATED_KEY)
+    if cached is not None:
+        return cached  # type: ignore[return-value]
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{settings.TMDB_BASE_URL}/movie/top_rated",
+            params=_tmdb_params({"language": "en-US", "page": "1"}),
+            headers=_tmdb_headers(),
+            timeout=10.0,
+        )
+
+    if resp.status_code != 200:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=502, detail="TMDB API error")
+
+    results = [
+        {
+            "tmdb_id": m["id"],
+            "title": m.get("title", ""),
+            "overview": m.get("overview"),
+            "poster_url": f"{settings.TMDB_IMAGE_BASE_URL}{m['poster_path']}" if m.get("poster_path") else None,
+            "rating": round(m.get("vote_average", 0), 1),
+            "year": int(m["release_date"][:4]) if m.get("release_date") else None,
+            "language": m.get("original_language"),
+        }
+        for m in resp.json().get("results", [])
+        if not m.get("adult", False) and m.get("poster_path")
+    ]
+
+    _cache_set(_cache, _TOP_RATED_KEY, results)  # type: ignore[arg-type]
+    return results
+
+
 async def fetch_all(ids: list[int]) -> list[dict]:
     tasks = [fetch_movie(tmdb_id) for tmdb_id in ids]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return [r for r in results if isinstance(r, dict) and not r.get("adult", False)]
+
+
+async def discover_by_genre(genre_id: int) -> list[dict]:
+    """Fetch top-rated movies for a given TMDB genre_id via Discover API."""
+    cache_key = str(genre_id)
+    entry = _DISCOVER_CACHE.get(cache_key)
+    if entry and time.time() < entry[1]:
+        return entry[0]
+
+    async with _SEMAPHORE:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{settings.TMDB_BASE_URL}/discover/movie",
+                params=_tmdb_params({
+                    "with_genres": genre_id,
+                    "sort_by": "vote_average.desc",
+                    "vote_count.gte": "1000",
+                    "language": "en-US",
+                    "page": "1",
+                }),
+                headers=_tmdb_headers(),
+                timeout=10.0,
+            )
+
+    if resp.status_code != 200:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=502, detail="TMDB Discover API error")
+
+    results = [
+        {
+            "tmdb_id": m["id"],
+            "title": m.get("title", ""),
+            "overview": m.get("overview", ""),
+            "poster_url": f"{settings.TMDB_IMAGE_BASE_URL}{m['poster_path']}" if m.get("poster_path") else None,
+            "rating": round(m.get("vote_average", 0), 1),
+            "year": int(m["release_date"][:4]) if m.get("release_date") else None,
+            "language": m.get("original_language"),
+            "genre_ids": m.get("genre_ids", []),
+        }
+        for m in resp.json().get("results", [])
+        if not m.get("adult", False) and m.get("poster_path")
+    ]
+
+    _DISCOVER_CACHE[cache_key] = (results, time.time() + _TTL)
+    return results

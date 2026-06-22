@@ -3,12 +3,7 @@
 # Docs: docs/DEPLOY_RENDER.md
 
 services:
-  # ── Redis (rate limiting) ──────────────────────────────────────────────
-  - type: redis
-    name: sj-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
+
 
   # ── FastAPI backend ────────────────────────────────────────────────────
   - type: web
@@ -23,10 +18,7 @@ services:
       - key: TRUSTED_PROXY_IPS
         value: "*"
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: sj-redis
-          property: connectionString
+        sync: false
       - key: FRONTEND_URL
         fromService:
           type: web

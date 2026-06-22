@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' https://image.tmdb.org data:; connect-src 'self' https://*.supabase.co http://localhost:8000; frame-ancestors 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self'; img-src 'self' https://image.tmdb.org data:; connect-src 'self' https://*.supabase.co http://localhost:8000; frame-ancestors 'none'; base-uri 'self';">
     <title>SJ MovieReview — AI-Powered Movie Recommendations</title>
     <meta name="description" content="Stop scrolling. Our AI finds your next film in 60 seconds — with a reason you'll actually trust.">
     <script src="Static/js/origin-guard.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
+    <link rel="stylesheet" href="Static/libs/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="Static/css/style.css">
     <link rel="stylesheet" href="Static/css/landing.css">
 </head>
@@ -51,7 +51,6 @@
             <div class="lp-hero-static-glow" aria-hidden="true"></div>
             <div class="lp-hero-static-overlay"></div>
             <div class="lp-hero-minimal-content max-w-[640px] mx-auto px-6 text-center">
-                <p class="lp-hero-eyebrow">AI-powered film discovery</p>
                 <h1 class="lp-hero-headline">Stop scrolling.<br>Find a film worth watching tonight.</h1>
                 <p class="lp-hero-subline mx-auto">Answer 5 quick questions. Our AI builds 10 picks from your genre, mood, language, and more — each with a reason why it fits.</p>
 
@@ -76,6 +75,36 @@
                 </a>
             </div>
         </section>
+
+        <!-- ═══ Trending Now ═════════════════════════════════════ -->
+        <section class="lp-movies-section" id="trending-section">
+            <div class="lp-movies-inner">
+                <div class="lp-movies-header">
+                    <div class="lp-movies-title-group">
+                        <span class="lp-movies-badge"><i class="fa-solid fa-fire"></i></span>
+                        <h2 class="lp-movies-heading">Trending This Week</h2>
+                    </div>
+                    <a href="recommendations.html" class="lp-view-all">Get Your Own List <i class="fa-solid fa-wand-magic-sparkles"></i></a>
+                </div>
+                <div class="lp-movies-track-wrap">
+                    <div class="lp-movies-track" id="trending-track">
+                        <!-- Skeleton loaders -->
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                        <div class="lp-movie-skeleton"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
 
         <!-- Try a taste — interactive sample pick -->
         <section class="lp-taste-section" id="taste-demo">

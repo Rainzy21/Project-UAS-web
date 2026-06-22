@@ -32,6 +32,8 @@ _DEEPSEEK_MODEL = "deepseek-chat"
 _DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 _GEMINI_MODEL = "gemini-2.0-flash"
+_GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+_GROQ_MODEL = "llama-3.3-70b-versatile"  # free tier, fast & accurate
 _TEMPERATURE = 0.3     # low → factual / consistent TMDB IDs
 _MAX_TOKENS = 2048
 
@@ -39,6 +41,7 @@ _MAX_TOKENS = 2048
 
 _DEEPSEEK_CLIENT: AsyncOpenAI | None = None
 _GEMINI_CLIENT: AsyncOpenAI | None = None
+_GROQ_CLIENT: AsyncOpenAI | None = None
 
 # Map era → (min_year, max_year | None) used to make the prompt unambiguous.
 _ERA_RANGES: dict[str, tuple[int, int | None]] = {
@@ -81,6 +84,20 @@ def _get_deepseek_client() -> AsyncOpenAI | None:
             default_headers=headers if headers else None,
         )
     return _DEEPSEEK_CLIENT
+
+
+def _get_groq_client() -> AsyncOpenAI | None:
+    """Return Groq client if API key is available, else None."""
+    global _GROQ_CLIENT
+    if not settings.GROQ_API_KEY or settings.GROQ_API_KEY.startswith("gsk_isi"):
+        return None
+    if _GROQ_CLIENT is None:
+        _GROQ_CLIENT = AsyncOpenAI(
+            api_key=settings.GROQ_API_KEY,
+            base_url=_GROQ_BASE_URL,
+        )
+    return _GROQ_CLIENT
+
 
 
 async def _call_gemini_native(api_key: str, messages: list) -> str:
@@ -324,7 +341,7 @@ def _parse_ai_content(content: str) -> list:
 
 
 async def get_recommendations(preferences: dict) -> list[dict]:
-    """Call Gemini (with DeepSeek fallback) and parse the response."""
+    """Call Gemini (with Groq/DeepSeek fallback) and parse the response."""
     _validate_preferences(preferences)
 
     system_prompt = _build_system_prompt()
@@ -347,11 +364,23 @@ async def get_recommendations(preferences: dict) -> list[dict]:
         try:
             content = await _call_gemini_native(settings.GEMINI_API_KEY, messages)
         except Exception as exc:
-            logger.warning("Gemini failed (%s), falling back to DeepSeek.", exc)
+            logger.warning("Gemini failed (%s), falling back to Groq/DeepSeek.", exc)
     else:
-        logger.warning("GEMINI_API_KEY not configured; falling back to DeepSeek.")
+        logger.warning("GEMINI_API_KEY not configured; falling back to Groq/DeepSeek.")
 
-    # ── 2. Fallback: DeepSeek / OpenRouter ────────────────────────────────
+    # ── 2. Fallback: Groq (free tier) ───────────────────────────────────────
+    if not content:
+        groq = _get_groq_client()
+        if groq:
+            try:
+                content = await _call_ai(groq, _GROQ_MODEL, messages)
+                logger.info("Groq responded successfully.")
+            except Exception as exc:
+                logger.warning("Groq failed (%s), falling back to DeepSeek.", exc)
+        else:
+            logger.warning("GROQ_API_KEY not configured; skipping Groq.")
+
+    # ── 3. Fallback: DeepSeek / OpenRouter ────────────────────────────────
     if not content:
         try:
             deepseek = _get_deepseek_client()
@@ -367,7 +396,7 @@ async def get_recommendations(preferences: dict) -> list[dict]:
             logger.exception("DeepSeek AI provider failed")
             raise HTTPException(
                 status_code=502,
-                detail={"error": True, "code": "AI_ERROR", "message": "AI service unavailable", "status": 502},
+                detail={"error": True, "code": "SERVICE_UNAVAILABLE", "message": "Layanan rekomendasi sedang sibuk. Silakan coba lagi nanti.", "status": 502},
             ) from exc
 
     try:
@@ -378,8 +407,8 @@ async def get_recommendations(preferences: dict) -> list[dict]:
             status_code=502,
             detail={
                 "error": True,
-                "code": "AI_ERROR",
-                "message": "Failed to parse AI response",
+                "code": "SERVICE_ERROR",
+                "message": "Terjadi kendala saat menyusun rekomendasi. Silakan coba lagi.",
                 "status": 502,
             },
         ) from exc
@@ -388,6 +417,6 @@ async def get_recommendations(preferences: dict) -> list[dict]:
     if not results:
         raise HTTPException(
             status_code=502,
-            detail={"error": True, "code": "AI_ERROR", "message": "AI returned no valid movies", "status": 502},
+            detail={"error": True, "code": "NO_RESULTS", "message": "Tidak ada film yang persis cocok dengan filter Anda. Coba luaskan pencarian.", "status": 502},
         )
     return results

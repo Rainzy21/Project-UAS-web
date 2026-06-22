@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+import logging
 import time
 
 from fastapi import HTTPException
 
 from app.core.redis import get_redis
 
+logger = logging.getLogger(__name__)
+
 
 async def check_rate_limit(key: str, limit: int, window_seconds: int) -> None:
-    """Sliding-window rate limit using Redis sorted sets."""
+    """Sliding-window rate limit using Redis sorted sets.
+
+    Fails open (allows request) if Redis is unavailable — rate limiting is
+    best-effort in development. In production, Redis should always be present.
+    """
     now = time.time()
     window_start = now - window_seconds
     redis_key = f"rl:{key}"
@@ -26,5 +33,8 @@ async def check_rate_limit(key: str, limit: int, window_seconds: int) -> None:
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=503, detail="Rate limiting unavailable")
+    except Exception as exc:
+        logger.warning("Rate limiting unavailable (Redis unreachable): %s — allowing request", exc)
+        # Fail-open: allow the request through when Redis is not available.
+        # This is acceptable for local dev; production should always have Redis.
+

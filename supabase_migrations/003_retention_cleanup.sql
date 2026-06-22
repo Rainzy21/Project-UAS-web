@@ -31,7 +31,7 @@ BEGIN
     PERFORM cron.schedule(
       'cleanup-recommendation-logs',
       '0 3 1 * *',
-      $$SELECT public.cleanup_old_recommendation_logs()$$
+      'SELECT public.cleanup_old_recommendation_logs()'
     );
   END IF;
 EXCEPTION

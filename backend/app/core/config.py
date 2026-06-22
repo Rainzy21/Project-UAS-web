@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     DEEPSEEK_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     AI_CANDIDATE_COUNT: int = 15
 
     FRONTEND_URL: str = "http://localhost:5500"
